@@ -12,6 +12,18 @@ export class TileRenderer {
     this.initMeshes();
   }
 
+  syncTileReferences() {
+    for (let x = 0; x < this.gridWorld.size; x++) {
+      for (let y = 0; y < this.gridWorld.size; y++) {
+        const tileData = this.gridWorld.tiles[x][y];
+        const mesh = this.tileMeshes[x][y];
+        if (mesh) {
+          mesh.userData = { gridX: x, gridY: y, tileData };
+        }
+      }
+    }
+  }
+
   initMeshes() {
     const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.96, 0.4, TILE_SIZE * 0.96);
     // Base tile material

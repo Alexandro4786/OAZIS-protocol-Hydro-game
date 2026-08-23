@@ -2,6 +2,7 @@ import { INITIAL_RESOURCES, TECH_NODES } from '../config.js';
 
 export class GameState {
   constructor() {
+    this.listeners = new Map();
     this.reset();
   }
 
@@ -33,9 +34,6 @@ export class GameState {
       cropsLost: 0,
       crisesResolved: 0
     };
-
-    // Voqealar tinglovchilari
-    this.listeners = new Map();
   }
 
   on(event, callback) {

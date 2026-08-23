@@ -59,6 +59,7 @@ class OasisGame {
   restart() {
     this.gameState.reset();
     this.gridWorld.initGrid();
+    this.tileRenderer.syncTileReferences();
     this.buildingRenderer.clearAll();
     
     // Telemetriya va inqiroz boshqaruvini yangilash
@@ -75,14 +76,21 @@ class OasisGame {
     this.weather.temperature = 28;
     this.weather.et0 = 4.5;
     
-    // Boshlang'ich holatni qayta tiklash
+    // Terraformer va bino vizualini qayta tiklash
+    this.terraformer.update(this.gameState.resources.ecoScore);
     this.syncInitialWorld();
     this.uiManager.renderTools();
+    this.uiManager.update(this.weather, null);
+
+    // Ochiq modallarni yopish
+    document.getElementById('endgame-modal').style.display = 'none';
+    document.getElementById('restart-modal').style.display = 'none';
+
     this.audioManager.playHarvest();
     
     this.gameState.emit('notify', {
       type: 'success',
-      message: "O'yin yangitdan boshlandi! Barcha resurslar tiklandi."
+      message: "O'yin yangitdan boshlandi! Barcha resurslar va maydon tiklandi."
     });
   }
 
