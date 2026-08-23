@@ -28,7 +28,7 @@ export const IRRIGATION_TECH = {
     tier: 1,
     name: "Egatlab / Bostirib sug'orish",
     shortName: 'Egatlab',
-    cost: 40,
+    cost: 0,             // 100% BEPUL boshlang'ich sug'orish
     waterPerHour: 15,    // m3/h sarfi
     efficiency: 0.45,    // 45% samaradorlik
     evaporationLoss: 0.38, // 38% havoga bug'lanish
@@ -36,7 +36,7 @@ export const IRRIGATION_TECH = {
     salinityIncrease: 0.08, // Sho'rlanishni tezlashtiradi
     icon: '🌊',
     color: '#8b6f47',
-    description: "An'anaviy qadimiy usul. Xarajati arzon, biroq suvning 55% dan ko'prog'i havoga bug'lanib va sizilib isrof bo'ladi. Tuproqni tez sho'rlantiradi.",
+    description: "An'anaviy qadimiy usul (BEPUL). Xarajatsiz, biroq suvning 55% havoga bug'lanadi. Yangi texnologiyalar bilan almashtiring.",
     unlockedByDefault: true
   },
   sprinkler: {
@@ -248,8 +248,8 @@ export const TECH_NODES = [
     id: 'tech_sprinkler',
     tier: 2,
     name: "Yomg'irlatish Tizimi",
-    cost: 350,
-    ecoRequirement: 20,
+    cost: 200,
+    ecoRequirement: 0, // Boshlanishidayoq ochish mumkin!
     prerequisites: [],
     unlocks: ['sprinkler'],
     description: "Purkagichli apparatlar orqali sug'orishga o'tish (suv isrofi 30% kamayadi)."
@@ -258,8 +258,8 @@ export const TECH_NODES = [
     id: 'tech_surface_drip',
     tier: 2,
     name: "Er Usti Tomchilatish",
-    cost: 500,
-    ecoRequirement: 30,
+    cost: 350,
+    ecoRequirement: 5,
     prerequisites: ['tech_sprinkler'],
     unlocks: ['drip_surface'],
     description: "Tomchilatish shlanglari va filtrlar orqali ekin qatoriga suv berish."
@@ -268,8 +268,8 @@ export const TECH_NODES = [
     id: 'tech_sdi',
     tier: 3,
     name: "Yer Osti Tomchilatish (SDI)",
-    cost: 900,
-    ecoRequirement: 45,
+    cost: 600,
+    ecoRequirement: 15,
     prerequisites: ['tech_surface_drip'],
     unlocks: ['sdi'],
     description: "Kapillyar namlantirish texnologiyasi: bug'lanish deyarli nolga tushadi, 70% tejamkorlik."
@@ -278,8 +278,8 @@ export const TECH_NODES = [
     id: 'tech_iot_sensors',
     tier: 3,
     name: "IoT Tuproq Sensorlari",
-    cost: 750,
-    ecoRequirement: 50,
+    cost: 500,
+    ecoRequirement: 15,
     prerequisites: ['tech_surface_drip'],
     unlocks: ['iot_tower'],
     description: "VWC% va sho'rlanish datchiklari bilan qurollangan SCADA minoralari."
@@ -288,8 +288,8 @@ export const TECH_NODES = [
     id: 'tech_solar_power',
     tier: 3,
     name: "Agro-Voltaik Quyosh Panellari",
-    cost: 650,
-    ecoRequirement: 40,
+    cost: 450,
+    ecoRequirement: 10,
     prerequisites: [],
     unlocks: ['solar_array'],
     description: "Nasoslarni toza qayta tiklanuvchi energiya bilan quvvatlantirish."
@@ -298,8 +298,8 @@ export const TECH_NODES = [
     id: 'tech_ai_scada',
     tier: 4,
     name: "AI & Fuzzy-PID Avtomatik Dozalash",
-    cost: 1600,
-    ecoRequirement: 70,
+    cost: 950,
+    ecoRequirement: 30,
     prerequisites: ['tech_sdi', 'tech_iot_sensors'],
     unlocks: ['scada_ai'],
     description: "Inson aralashuvisiz real vaqtda evapotranspiratsiyani (ET₀) hisoblab suvni taqsimlovchi sun'iy intellekt."

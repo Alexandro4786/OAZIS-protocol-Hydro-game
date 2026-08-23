@@ -392,10 +392,11 @@ export class BuildingRenderer {
     }
 
     const stage = tile.crop.stage || 0;
-    const isWithered = tile.crop.isWithered;
+    const isWithered = !!tile.crop.isWithered;
+    const healthTier = isWithered ? -1 : Math.floor((tile.crop.health || 0) / 30);
     const cropType = tile.crop.type;
 
-    if (existing && existing.userData.stage === stage && existing.userData.isWithered === isWithered) {
+    if (existing && existing.userData.stage === stage && existing.userData.isWithered === isWithered && existing.userData.healthTier === healthTier) {
       return; // O'zgarishsiz
     }
 
@@ -405,22 +406,22 @@ export class BuildingRenderer {
 
     const cropGroup = new THREE.Group();
     cropGroup.position.set(x, y, z);
-    cropGroup.userData = { stage, isWithered };
+    cropGroup.userData = { stage, isWithered, healthTier };
     cropGroup.sway = !isWithered;
 
     // Ranglar va materiallar
     let plantColor = 0x4caf50;
-    if (isWithered) plantColor = 0x5d4037; // Qurigan
-    else if (tile.crop.health < 40) plantColor = 0xafb42b; // Sariq
+    if (isWithered) plantColor = 0x5d4037; // Qurigan to'q jigarrang
+    else if (tile.crop.health < 40) plantColor = 0xc0ca33; // Chanqagan sarg'ish
 
-    const plantMat = new THREE.MeshStandardMaterial({ color: plantColor, roughness: 0.6 });
+    const plantMat = new THREE.MeshStandardMaterial({ color: plantColor, roughness: 0.8 });
 
     // O'simlik turi bo'yicha 3D modellash
     if (cropType === 'cotton') {
       const scale = 0.3 + stage * 0.22;
-      const bushGeo = new THREE.DodecahedronGeometry(scale, 1);
+      const bushGeo = new THREE.DodecahedronGeometry(isWithered ? scale * 0.7 : scale, 1);
       const bush = new THREE.Mesh(bushGeo, plantMat);
-      bush.position.y = scale * 0.8;
+      bush.position.y = (scale * 0.8) * (isWithered ? 0.7 : 1.0);
       bush.castShadow = true;
       cropGroup.add(bush);
 
@@ -436,27 +437,29 @@ export class BuildingRenderer {
         }
       }
     } else if (cropType === 'wheat' || cropType === 'corn') {
-      const stalkCount = 6 + stage * 2;
+      const stalkCount = isWithered ? 4 : (6 + stage * 2);
       for (let i = 0; i < stalkCount; i++) {
-        const height = (0.3 + stage * 0.25) * (0.8 + Math.random() * 0.4);
+        const height = (0.3 + stage * 0.25) * (isWithered ? 0.6 : (0.8 + Math.random() * 0.4));
         const stalkGeo = new THREE.CylinderGeometry(0.02, 0.03, height, 4);
-        const color = cropType === 'wheat' && stage >= 3 ? 0xfbc02d : plantColor;
+        let color = plantColor;
+        if (!isWithered && cropType === 'wheat' && stage >= 3) color = 0xfbc02d;
         const stalk = new THREE.Mesh(stalkGeo, new THREE.MeshStandardMaterial({ color }));
-        const offX = (Math.random() - 0.5) * 1.2;
-        const offZ = (Math.random() - 0.5) * 1.2;
+        const offX = (Math.random() - 0.5) * 1.0;
+        const offZ = (Math.random() - 0.5) * 1.0;
         stalk.position.set(offX, height / 2, offZ);
+        if (isWithered) stalk.rotation.z = (Math.random() - 0.5) * 0.8; // Egilib qolgan
         cropGroup.add(stalk);
       }
     } else if (cropType === 'orchard') {
       // Mevali daraxt
       const trunkGeo = new THREE.CylinderGeometry(0.12, 0.18, 1.0 + stage * 0.3, 6);
-      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x4e342e });
+      const trunkMat = new THREE.MeshStandardMaterial({ color: isWithered ? 0x3e2723 : 0x4e342e });
       const trunk = new THREE.Mesh(trunkGeo, trunkMat);
       trunk.position.y = (1.0 + stage * 0.3) / 2;
       trunk.castShadow = true;
       cropGroup.add(trunk);
 
-      const foliageGeo = new THREE.SphereGeometry(0.6 + stage * 0.2, 7, 7);
+      const foliageGeo = new THREE.SphereGeometry(isWithered ? (0.4 + stage * 0.1) : (0.6 + stage * 0.2), 7, 7);
       const foliage = new THREE.Mesh(foliageGeo, plantMat);
       foliage.position.y = 1.0 + stage * 0.4;
       foliage.castShadow = true;
@@ -474,22 +477,32 @@ export class BuildingRenderer {
       }
     } else if (cropType === 'oasis_tree') {
       // Xurmo / Saksovul daraxti
+      const trunkMat = new THREE.MeshStandardMaterial({
+        color: isWithered ? 0x3e2723 : 0x5d4037,
+        roughness: 0.9
+      });
       const trunkGeo = new THREE.CylinderGeometry(0.15, 0.25, 2.2, 6);
-      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5d4037 });
       const trunk = new THREE.Mesh(trunkGeo, trunkMat);
       trunk.position.y = 1.1;
+      if (isWithered) {
+        trunk.rotation.z = 0.22; // Quriganda egilgan tana
+      }
       trunk.castShadow = true;
       cropGroup.add(trunk);
 
-      // Xurmo barglari
-      const leafMat = new THREE.MeshStandardMaterial({ color: 0x2e7d32 });
+      // Saksovul barglari (quriganda to'q qoramtir-jigarrang va pastga osilgan)
+      let leafColor = 0x2e7d32;
+      if (isWithered) leafColor = 0x4e342e; // Qurigan barglar
+      else if (tile.crop.health < 40) leafColor = 0xafb42b; // Chanqagan sarg'ish
+
+      const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, roughness: 0.85 });
       for (let i = 0; i < 6; i++) {
-        const leafGeo = new THREE.ConeGeometry(0.3, 1.6, 4);
+        const leafGeo = new THREE.ConeGeometry(0.28, isWithered ? 1.0 : 1.6, 4);
         const leaf = new THREE.Mesh(leafGeo, leafMat);
         const angle = (i / 6) * Math.PI * 2;
-        leaf.rotation.x = Math.PI / 2.5;
+        leaf.rotation.x = isWithered ? Math.PI / 1.6 : Math.PI / 2.5; // Pastga so'ligan
         leaf.rotation.y = angle;
-        leaf.position.set(0, 2.1, 0);
+        leaf.position.set(0, isWithered ? 1.8 : 2.1, 0);
         cropGroup.add(leaf);
       }
     }
