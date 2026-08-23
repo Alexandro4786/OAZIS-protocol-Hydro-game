@@ -107,8 +107,15 @@
     </div>
   </header>
 
-  <!-- Heatmaps Floating Bar -->
-  <div id="heatmap-dock" class="glass-panel">
+  <!-- Floating Heatmap Toggle Button (Top-Left) -->
+  <button id="btn-toggle-heatmap" class="dock-toggle-btn heatmap-toggle-btn glass-panel">
+    <span class="toggle-icon">🗺️</span>
+    <span id="heatmap-toggle-label">Xaritalar</span>
+    <span id="heatmap-toggle-arrow" class="toggle-arrow">▲</span>
+  </button>
+
+  <!-- Heatmaps Floating Bar (Collapsible) -->
+  <div id="heatmap-dock" class="glass-panel collapsed">
     <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; padding: 2px 4px;">Xaritalar (Heatmap)</div>
     <button class="heatmap-btn active" data-heatmap="none">🌐 Tabiiy 3D</button>
     <button class="heatmap-btn" data-heatmap="moisture">💧 Namlik (VWC%)</button>

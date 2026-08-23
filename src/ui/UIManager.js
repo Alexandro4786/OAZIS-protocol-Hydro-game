@@ -67,7 +67,29 @@ export class UIManager {
       }
     });
 
-    // 2. Heatmap almashtirish
+    // 2. Heatmap menyusini ochish / yopish
+    const heatmapDock = document.getElementById('heatmap-dock');
+    const heatmapToggleBtn = document.getElementById('btn-toggle-heatmap');
+    const heatmapToggleArrow = document.getElementById('heatmap-toggle-arrow');
+    let isHeatmapOpen = false;
+
+    heatmapToggleBtn?.addEventListener('click', () => {
+      this.audioManager.playClick();
+      isHeatmapOpen = !isHeatmapOpen;
+      if (isHeatmapOpen) {
+        heatmapDock.classList.remove('collapsed');
+        heatmapDock.style.display = 'flex';
+        heatmapToggleBtn.classList.add('active');
+        if (heatmapToggleArrow) heatmapToggleArrow.innerText = "▼";
+      } else {
+        heatmapDock.classList.add('collapsed');
+        heatmapDock.style.display = 'none';
+        heatmapToggleBtn.classList.remove('active');
+        if (heatmapToggleArrow) heatmapToggleArrow.innerText = "▲";
+      }
+    });
+
+    // 2.1. Heatmap almashtirish
     document.querySelectorAll('.heatmap-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         this.audioManager.playClick();

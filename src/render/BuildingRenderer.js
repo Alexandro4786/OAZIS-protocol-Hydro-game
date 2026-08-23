@@ -418,22 +418,155 @@ export class BuildingRenderer {
 
     // O'simlik turi bo'yicha 3D modellash
     if (cropType === 'cotton') {
-      const scale = 0.3 + stage * 0.22;
-      const bushGeo = new THREE.DodecahedronGeometry(isWithered ? scale * 0.7 : scale, 1);
-      const bush = new THREE.Mesh(bushGeo, plantMat);
-      bush.position.y = (scale * 0.8) * (isWithered ? 0.7 : 1.0);
-      bush.castShadow = true;
-      cropGroup.add(bush);
+      // ===== O'ZBEKISTON OQ OLTINI - PAXTA (G'O'ZA) =====
+      if (isWithered) {
+        // 1. Qurigan g'o'zapoya
+        const deadStalkMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9 });
+        const stalkGeo = new THREE.CylinderGeometry(0.03, 0.07, 0.9, 5);
+        const stalk = new THREE.Mesh(stalkGeo, deadStalkMat);
+        stalk.position.y = 0.45;
+        stalk.rotation.z = 0.2;
+        cropGroup.add(stalk);
 
-      // Pishgan paxta ko'saklari
-      if (stage >= 3 && !isWithered) {
-        const bollMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
-        for (let i = 0; i < 5; i++) {
-          const bollGeo = new THREE.SphereGeometry(0.12, 6, 6);
-          const boll = new THREE.Mesh(bollGeo, bollMat);
-          const angle = (i / 5) * Math.PI * 2;
-          boll.position.set(Math.cos(angle) * scale * 0.7, scale * 0.8 + Math.sin(i) * 0.2, Math.sin(angle) * scale * 0.7);
-          cropGroup.add(boll);
+        for (let b = 0; b < 3; b++) {
+          const twigGeo = new THREE.CylinderGeometry(0.015, 0.03, 0.4, 4);
+          const twig = new THREE.Mesh(twigGeo, deadStalkMat);
+          const angle = (b / 3) * Math.PI * 2;
+          twig.position.set(Math.cos(angle) * 0.1, 0.5 + b * 0.15, Math.sin(angle) * 0.1);
+          twig.rotation.set(Math.cos(angle) * 0.8, angle, Math.sin(angle) * 0.8);
+          cropGroup.add(twig);
+        }
+      } else {
+        // 2. Tirik va yashil g'o'za
+        const stemMat = new THREE.MeshStandardMaterial({ color: 0x33691e, roughness: 0.7 });
+        const leafColor = tile.crop.health < 40 ? 0x9e9d24 : 0x2e7d32;
+        const leafMat = new THREE.MeshStandardMaterial({ color: leafColor, roughness: 0.65, flatShading: true });
+
+        // Asosiy poya (Main Stem)
+        const plantHeight = 0.3 + stage * 0.22;
+        const stemGeo = new THREE.CylinderGeometry(0.025, 0.05, plantHeight, 6);
+        const stem = new THREE.Mesh(stemGeo, stemMat);
+        stem.position.y = plantHeight / 2;
+        stem.castShadow = true;
+        cropGroup.add(stem);
+
+        // Barglar shox-shabbasi (Bushes)
+        const bushScale = 0.22 + stage * 0.18;
+        const bushGeo = new THREE.DodecahedronGeometry(bushScale, 1);
+        const bush = new THREE.Mesh(bushGeo, leafMat);
+        bush.position.y = plantHeight * 0.75;
+        bush.castShadow = true;
+        cropGroup.add(bush);
+
+        // Yon shoxchalardagi barglar
+        if (stage >= 1) {
+          for (let b = 0; b < 4; b++) {
+            const sideBushGeo = new THREE.DodecahedronGeometry(bushScale * 0.6, 0);
+            const sideBush = new THREE.Mesh(sideBushGeo, leafMat);
+            const angle = (b / 4) * Math.PI * 2;
+            sideBush.position.set(Math.cos(angle) * bushScale * 0.8, plantHeight * 0.6, Math.sin(angle) * bushScale * 0.8);
+            cropGroup.add(sideBush);
+          }
+        }
+
+        // ===== BOSQICH 2: GULLASH (PAXTA GULI) 🌸🌼 =====
+        if (stage === 2) {
+          const flowerPetalMat = new THREE.MeshStandardMaterial({
+            color: 0xfff9c4, // Sariq-qaymoqrang gulyaproq
+            emissive: 0xf48fb1,
+            emissiveIntensity: 0.3,
+            roughness: 0.5
+          });
+          const calyxMat = new THREE.MeshStandardMaterial({ color: 0x33691e });
+
+          for (let f = 0; f < 6; f++) {
+            const angle = (f / 6) * Math.PI * 2 + (f % 2) * 0.5;
+            const r = bushScale * 0.85;
+            const fy = plantHeight * (0.5 + (f % 3) * 0.2);
+            const fx = Math.cos(angle) * r;
+            const fz = Math.sin(angle) * r;
+
+            const flowerGroup = new THREE.Group();
+            flowerGroup.position.set(fx, fy, fz);
+
+            // Yashil kosachabarg (Calyx)
+            const calyxGeo = new THREE.ConeGeometry(0.08, 0.08, 3);
+            const calyx = new THREE.Mesh(calyxGeo, calyxMat);
+            calyx.rotation.x = Math.PI;
+            flowerGroup.add(calyx);
+
+            // Sariq gul
+            const flowerGeo = new THREE.SphereGeometry(0.07, 6, 6);
+            const flower = new THREE.Mesh(flowerGeo, flowerPetalMat);
+            flower.position.y = 0.05;
+            flowerGroup.add(flower);
+
+            cropGroup.add(flowerGroup);
+          }
+        }
+
+        // ===== BOSQICH 3: KO'SAK TUGISH (GREEN BOLLS) 🟢 =====
+        if (stage === 3) {
+          const bollMat = new THREE.MeshStandardMaterial({ color: 0x558b2f, roughness: 0.5 });
+          for (let k = 0; k < 7; k++) {
+            const angle = (k / 7) * Math.PI * 2;
+            const r = bushScale * 0.85;
+            const by = plantHeight * (0.45 + (k % 3) * 0.2);
+            const bx = Math.cos(angle) * r;
+            const bz = Math.sin(angle) * r;
+
+            const bollGeo = new THREE.ConeGeometry(0.07, 0.14, 5);
+            const boll = new THREE.Mesh(bollGeo, bollMat);
+            boll.position.set(bx, by, bz);
+            boll.rotation.set(Math.random() * 0.5, angle, Math.random() * 0.5);
+            cropGroup.add(boll);
+          }
+        }
+
+        // ===== BOSQICH 4: OCHILGAN OPPOG' PAXTA KO'SAKLARI (SNOW-WHITE COTTON) ☁️✨ =====
+        if (stage >= 4) {
+          const cottonMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            roughness: 0.95,
+            metalness: 0.05
+          });
+          const driedBractMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.9 });
+
+          for (let p = 0; p < 9; p++) {
+            const angle = (p / 9) * Math.PI * 2 + (p % 2) * 0.3;
+            const r = bushScale * (0.8 + (p % 3) * 0.1);
+            const py = plantHeight * (0.35 + (p % 4) * 0.18);
+            const px = Math.cos(angle) * r;
+            const pz = Math.sin(angle) * r;
+
+            const bollGroup = new THREE.Group();
+            bollGroup.position.set(px, py, pz);
+
+            // Qurigan 4 qirrali ko'sak kosachasi (Dried Bracts)
+            for (let b = 0; b < 4; b++) {
+              const bGeo = new THREE.BoxGeometry(0.14, 0.02, 0.04);
+              const bMesh = new THREE.Mesh(bGeo, driedBractMat);
+              bMesh.rotation.y = (b / 4) * Math.PI * 2;
+              bollGroup.add(bMesh);
+            }
+
+            // 4 ta bo'lakli oppog' paxta tolasi (Fluffy Cotton Segments)
+            const centerCottonGeo = new THREE.SphereGeometry(0.09, 8, 8);
+            const centerCotton = new THREE.Mesh(centerCottonGeo, cottonMat);
+            centerCotton.position.y = 0.04;
+            centerCotton.castShadow = true;
+            bollGroup.add(centerCotton);
+
+            for (let c = 0; c < 4; c++) {
+              const puffGeo = new THREE.SphereGeometry(0.055, 6, 6);
+              const puff = new THREE.Mesh(puffGeo, cottonMat);
+              const cAngle = (c / 4) * Math.PI * 2;
+              puff.position.set(Math.cos(cAngle) * 0.04, 0.05, Math.sin(cAngle) * 0.04);
+              bollGroup.add(puff);
+            }
+
+            cropGroup.add(bollGroup);
+          }
         }
       }
     } else if (cropType === 'wheat' || cropType === 'corn') {
