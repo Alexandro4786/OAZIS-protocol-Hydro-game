@@ -109,16 +109,37 @@ export class GridWorld {
         // b) Namlikning tabiiy pasayishi
         tile.moisture = Math.max(5, tile.moisture - evaporationLoss);
 
-        // c) Sug'orish oqimi (Quvur yoki nasos ulangan bo'lsa avtomatik sug'oradi)
+        // c) Sug'orish oqimi (Quvur yoki nasos ulangan bo'lsa kafolatlangan suv berish)
         tile.waterLossRate = 0;
         if (tile.isConnectedToWater) {
-          // Agar ekin yoki quvur bo'lsa-yu sug'orish turi tanlanmagan bo'lsa,
-          // avtomatik ravishda bazaviy sug'orish (Egat/Quvur) ishga tushadi
-          if (!tile.irrigation && (tile.crop || tile.hasPipe)) {
-            tile.irrigation = 'furrow';
-            tile.irrigationActive = true;
+          // 1. Daryoga qo'shni bo'lsa tabiiy suv olishi
+          const riverNeighbors = this.getNeighbors(tile.x, tile.y).filter(nb => nb.type === 'river');
+          if (riverNeighbors.length > 0) {
+            tile.moisture = Math.max(tile.moisture, 55);
           }
-          if (tile.irrigation && tile.irrigationActive) {
+
+          // 2. Sprinkler (Yomg'irlatgich) 3x3 hududni to'liq purkaydi
+          if (tile.irrigation === 'sprinkler' && tile.irrigationActive) {
+            for (let dx = -1; dx <= 1; dx++) {
+              for (let dy = -1; dy <= 1; dy++) {
+                const nt = this.getTile(tile.x + dx, tile.y + dy);
+                if (nt && nt.type !== 'river') {
+                  nt.isConnectedToWater = true;
+                  nt.moisture = Math.min(80, Math.max(nt.moisture, 65));
+                }
+              }
+            }
+          }
+
+          // 3. Egatlab, Tomchilatish yoki Quvur orqali namlikni 60-75% optimal oraliqda ushlab turish
+          if (tile.crop || tile.irrigation || tile.hasPipe) {
+            if (!tile.irrigation) {
+              tile.irrigation = 'furrow';
+              tile.irrigationActive = true;
+            }
+            if (tile.moisture < 65) {
+              tile.moisture = Math.min(75, tile.moisture + 20 * dt);
+            }
             this.applyIrrigation(tile, dt, weather);
           }
         }
@@ -130,11 +151,9 @@ export class GridWorld {
 
         // e) Drenaj va tuproq sho'rlanishi dinamikasi
         if (tile.moisture > 85) {
-          // Ortiqcha suv pastga sizilib drenaj yo'qotishi yuz beradi
           const overWater = (tile.moisture - 85) * 0.1 * dt;
           tile.moisture -= overWater;
           tile.waterLossRate += overWater * 0.5;
-          // Egatlab sug'orishda ortiqcha suv sho'rni yer yuziga ko'taradi
           if (tile.irrigation === 'furrow') {
             tile.salinity = Math.min(100, tile.salinity + 0.15 * dt);
           }
@@ -161,10 +180,8 @@ export class GridWorld {
     const tech = IRRIGATION_TECH[tile.irrigation] || IRRIGATION_TECH['furrow'];
     if (!tech) return;
 
-    // AI SCADA / Fuzzy-PID boshqaruvi
     let flowRate = tech.waterPerHour;
     if (tile.irrigation === 'scada_ai' && tile.isCoveredByIot) {
-      // Fuzzy-PID: ekin namlik ehtiyojini ushlab turadi
       const error = tile.targetMoisture - tile.moisture;
       tile.pidIntegral = Math.max(-20, Math.min(20, tile.pidIntegral + error * dt));
       const derivative = (error - tile.pidLastError) / Math.max(0.01, dt);
@@ -174,13 +191,10 @@ export class GridWorld {
       const Ki = 0.05;
       const Kd = 0.2;
       let pidOutput = (Kp * error + Ki * tile.pidIntegral + Kd * derivative);
-      
-      // Ob-havo prognozi bo'yicha profilaktik korreksiya
-      if (weather.et0 > 6.0) pidOutput += 1.5; // Issiqda oldindan ko'proq berish
+      if (weather.et0 > 6.0) pidOutput += 1.5;
 
       flowRate = Math.max(0, Math.min(tech.waterPerHour * 1.5, pidOutput));
     } else {
-      // Oddiy mexanik oqim: agar namlik 80% dan oshsa isrof
       if (tile.moisture >= 85) {
         flowRate *= 0.5;
       }
@@ -191,20 +205,18 @@ export class GridWorld {
       return;
     }
 
-    const waterVolume = (flowRate * dt) * 0.1; // m3
+    const waterVolume = (flowRate * dt) * 0.05; // m3
     const actualProvided = this.gameState.consumeWater(waterVolume, tile.sourceType || 'surface');
     
     if (actualProvided > 0) {
       tile.currentFlow = flowRate;
-      
-      // Samaradorlik bo'yicha namlikka aylanishi
       const effectiveWater = actualProvided * tech.efficiency;
       const wastedWater = actualProvided * (1 - tech.efficiency);
       
-      tile.moisture = Math.min(100, tile.moisture + effectiveWater * 12);
+      tile.moisture = Math.min(85, tile.moisture + effectiveWater * 15);
       tile.waterLossRate += wastedWater;
       this.gameState.stats.waterWasted += wastedWater;
-      this.gameState.stats.waterSaved += actualProvided * (tech.efficiency - 0.45); // Egatga nisbatan tejash
+      this.gameState.stats.waterSaved += actualProvided * (tech.efficiency - 0.45);
     }
   }
 
@@ -214,34 +226,33 @@ export class GridWorld {
 
     tile.crop.daysAlive += dt * 0.1;
 
-    // Namlik tekshiruvi
-    const isOptimal = tile.moisture >= cropConfig.optimalMoistureMin && tile.moisture <= cropConfig.optimalMoistureMax;
-    const isDry = tile.moisture < cropConfig.optimalMoistureMin * 0.6;
-    const isFlooded = tile.moisture > cropConfig.optimalMoistureMax * 1.25;
+    // Namlik tekshiruvi (optimal yoki chanqoq)
+    const isOptimal = tile.moisture >= cropConfig.optimalMoistureMin * 0.85 && tile.moisture <= cropConfig.optimalMoistureMax * 1.15;
+    const isDry = tile.moisture < cropConfig.optimalMoistureMin * 0.5;
+    const isFlooded = tile.moisture > cropConfig.optimalMoistureMax * 1.35;
     const isSalineToxic = (tile.salinity / 100) > cropConfig.salinityTolerance;
 
     if (isOptimal && !isSalineToxic) {
-      tile.crop.health = Math.min(100, tile.crop.health + 3.0 * dt);
-      tile.crop.progress += (100 / cropConfig.growDays) * 0.12 * dt;
+      tile.crop.health = Math.min(100, tile.crop.health + 4.0 * dt);
+      tile.crop.progress += (100 / cropConfig.growDays) * 0.15 * dt;
     } else if (isDry || isFlooded || isSalineToxic) {
-      tile.crop.health = Math.max(0, tile.crop.health - 1.2 * dt);
+      tile.crop.health = Math.max(0, tile.crop.health - 0.8 * dt); // Juda sekin pasayadi (chidamli)
     }
 
     // O'simlik suv ichishi
-    const waterIntake = cropConfig.waterNeed * 0.04 * dt;
+    const waterIntake = cropConfig.waterNeed * 0.02 * dt;
     tile.moisture = Math.max(0, tile.moisture - waterIntake);
 
     // O'sish bosqichlari (0: Ekish, 1: Nihol, 2: Gullash, 3: Pishish, 4: Hosil yetildi)
     tile.crop.stage = Math.min(4, Math.floor((tile.crop.progress / 100) * 4));
 
-    // Salomatlik nolga tushsa ekin quriydi
     if (tile.crop.health <= 0) {
       tile.crop.isWithered = true;
     }
   }
 
   updateNetworkConnectivity() {
-    // 1. Barcha nasos/manbalarni topish
+    // 1. Barcha daryo, nasos va suv manbalarini topish
     const sources = [];
     const iotTowers = [];
 
@@ -253,6 +264,7 @@ export class GridWorld {
         
         if (tile.type === 'river') {
           tile.isConnectedToWater = true;
+          sources.push(tile); // Daryoning barcha kataklari suv manbai hisoblanadi
         }
         if (tile.building === 'canal_intake' || tile.building === 'deep_well') {
           sources.push(tile);
@@ -264,7 +276,7 @@ export class GridWorld {
       }
     }
 
-    // 2. Suv oqimi yo'lini (Flood-fill or BFS) aniqlash
+    // 2. Suv oqimi yo'lini (Flood-fill / BFS) aniqlash
     const queue = [...sources];
     const visited = new Set(sources.map(s => s.id));
 
@@ -273,8 +285,8 @@ export class GridWorld {
       const neighbors = this.getNeighbors(current.x, current.y);
       for (const n of neighbors) {
         if (!visited.has(n.id)) {
-          // Agar quvur yoki sug'orish o'rnatilgan bo'lsa ulanadi
-          if (n.hasPipe || n.irrigation || n.building) {
+          // Quvur, sug'orish uskunasi, bino yoki ekin bo'lsa suv ulanadi
+          if (n.hasPipe || n.irrigation || n.building || n.crop) {
             n.isConnectedToWater = true;
             n.sourceType = current.sourceType || (current.building === 'deep_well' ? 'aquifer' : 'surface');
             visited.add(n.id);

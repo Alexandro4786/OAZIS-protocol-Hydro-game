@@ -218,6 +218,7 @@ class OasisGame {
         if (this.gameState.spendBudget(techConfig.cost)) {
           tile.irrigation = irrKey;
           tile.irrigationActive = true;
+          this.gridWorld.updateNetworkConnectivity();
           this.audioManager.playBuild();
           this.buildingRenderer.sync();
           this.gameState.emit('notify', { type: 'success', message: `${techConfig.shortName} o'rnatildi (-$${techConfig.cost})` });
@@ -233,8 +234,10 @@ class OasisGame {
         const cost = BUILDINGS.pipe.cost;
         if (this.gameState.spendBudget(cost)) {
           tile.hasPipe = true;
+          this.gridWorld.updateNetworkConnectivity();
           this.audioManager.playBuild();
           this.buildingRenderer.sync();
+          this.gameState.emit('notify', { type: 'success', message: "Gidravlik quvur yotqizildi (-$15)" });
         }
       } else {
         const bldConfig = BUILDINGS[bldKey];
@@ -246,6 +249,7 @@ class OasisGame {
           if (this.gameState.spendBudget(bldConfig.cost)) {
             tile.building = bldKey;
             tile.hasPipe = true; // Inshootlar avtomatik quvur vazifasini ham o'taydi
+            this.gridWorld.updateNetworkConnectivity();
             this.audioManager.playBuild();
             this.buildingRenderer.sync();
             this.gameState.emit('notify', { type: 'success', message: `${bldConfig.name} qurildi (-$${bldConfig.cost})` });
