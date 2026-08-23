@@ -249,6 +249,17 @@ class OasisGame {
             this.gameState.emit('notify', { type: 'warning', message: "Bu katakda boshqa inshoot bor!" });
             return;
           }
+          if (bldKey === 'canal_intake') {
+            const isRiverOrBank = tile.type === 'river' || this.gridWorld.getNeighbors(tile.x, tile.y).some(n => n.type === 'river');
+            if (!isRiverOrBank) {
+              this.gameState.emit('notify', { type: 'warning', message: "⚠️ Kanal nasosi faqat daryo ustiga yoki daryo qirg'og'iga o'rnatiladi!" });
+              return;
+            }
+          }
+          if (bldKey === 'deep_well' && tile.type === 'river') {
+            this.gameState.emit('notify', { type: 'warning', message: "Artezian qudug'i daryo ichiga emas, quruqlik/cho'lga o'rnatiladi!" });
+            return;
+          }
           if (this.gameState.spendBudget(bldConfig.cost)) {
             tile.building = bldKey;
             tile.hasPipe = true; // Inshootlar avtomatik quvur vazifasini ham o'taydi
