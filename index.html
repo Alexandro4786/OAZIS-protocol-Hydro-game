@@ -251,31 +251,147 @@
     </div>
   </div>
 
-  <!-- Tutorial / Help Modal -->
-  <div id="help-modal" class="modal-backdrop" style="display: none;">
-    <div class="modal-content glass-panel">
-      <button class="modal-close-btn" data-close="help-modal">✕</button>
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 24px;">📖</span>
-        <h2 style="font-size: 18px; color: var(--cyan-accent);">Oasis Protocol: Strategik Qo'llanma</h2>
+  <!-- Interactive Onboarding & Tutorial Modal -->
+  <div id="intro-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content glass-panel intro-modal-card">
+      <button class="modal-close-btn" data-close="intro-modal">✕</button>
+
+      <!-- Step Indicator Dots -->
+      <div class="intro-stepper">
+        <div class="intro-step-dot active" data-step="0">1. Missiya</div>
+        <div class="intro-step-line"></div>
+        <div class="intro-step-dot" data-step="1">2. Boshqaruv</div>
+        <div class="intro-step-line"></div>
+        <div class="intro-step-dot" data-step="2">3. Qadamlar</div>
+        <div class="intro-step-line"></div>
+        <div class="intro-step-dot" data-step="3">4. Avtomatika</div>
       </div>
-      
-      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px; line-height: 1.5; color: #cfd8dc;">
-        <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px;">
-          <h4 style="color: var(--cyan-accent); margin-bottom: 4px;">1. Suv va Quvur Infratuzilmasi</h4>
-          <p>Kanal nasosidan yoki chuqur arteziyan quduqdan boshlab ekin maydonlarigacha quvur (🚰) yotqizing. Suv yetib bormasa, sug'orish tizimi ishlamaydi.</p>
+
+      <!-- Slide 1: Mission & Resources -->
+      <div class="intro-slide" style="display: block;">
+        <div class="intro-hero">
+          <span class="intro-hero-icon">🏜️ ➔ 🌴</span>
+          <h2 class="intro-title">OASIS PROTOCOL: SUV RISOLASI</h2>
+          <p class="intro-subtitle">Cho'l hududida aqlli suv boshqaruvi va ekologik strategiya simulyatori</p>
         </div>
-        <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px;">
-          <h4 style="color: var(--yellow-accent); margin-bottom: 4px;">2. Texnologik Bosqichlar va Isrof</h4>
-          <p><strong>Egatlab sug'orish</strong> suvning 55% ini havoga bug'lantiradi va tuproqni sho'rlantiradi. Tezroq <strong>Tomchilatish</strong>, <strong>SDI (Er osti)</strong> va <strong>Smart SCADA</strong> ga o'ting!</p>
+
+        <div class="intro-grid-2">
+          <div class="intro-feature-box">
+            <div class="feature-head"><span class="f-icon">🎯</span> <strong>Asosiy Maqsad</strong></div>
+            <p>Qurg'oqchil hududda cheklangan suvdan oqilona foydalanib, an'anaviy isrofgarchilikdan aqlli sug'orishga o'ting va cho'lni gullab-yashnagan oazisga aylantiring!</p>
+          </div>
+
+          <div class="intro-feature-box">
+            <div class="feature-head"><span class="f-icon">💧</span> <strong>4 Asosiy Resurs</strong></div>
+            <ul class="intro-list">
+              <li><strong>💰 Byudjet:</strong> Ekin ekish, quvur va texnologiyalarni ochish.</li>
+              <li><strong>🏞️ Daryo & Akvifer:</strong> Cheklangan zaxira (ortiqcha tortilsa sho'rlanadi).</li>
+              <li><strong>🌱 Tuproq Namligi:</strong> 45-75% optimal me'yorni ushlang.</li>
+              <li><strong>✨ Oasis Index:</strong> Suvni tejash va unumdorlik darajasi.</li>
+            </ul>
+          </div>
         </div>
-        <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px;">
-          <h4 style="color: var(--green-accent); margin-bottom: 4px;">3. Ekinlar va Hosil</h4>
-          <p>Paxta ko'p daromad keltiradi lekin suvni ko'p ichadi. Mevali bog'lar va Agroo'rmon (Saksovul) esa cho'llanishni to'xtatib, Eko-Ballni keskin oshiradi.</p>
+      </div>
+
+      <!-- Slide 2: Map Controls (Google Maps style) -->
+      <div class="intro-slide" style="display: none;">
+        <div class="intro-hero">
+          <span class="intro-hero-icon">🗺️</span>
+          <h2 class="intro-title">Xarita va 3D Boshqaruv</h2>
+          <p class="intro-subtitle">Google Maps va Yandex Map kabi qulay va erkin navigatsiya</p>
         </div>
-        <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px;">
-          <h4 style="color: #ff7043; margin-bottom: 4px;">4. Boshqaruv (Kamera)</h4>
-          <p>Sichqonchaning o'ng tugmasi yoki g'ildiragini bosib kamerani aylantiring. G'ildirak orqali yaqinlashtiring. <strong>W, A, S, D</strong> yoki strelkalar yordamida xaritani suring.</p>
+
+        <div class="intro-grid-3">
+          <div class="intro-feature-box text-center">
+            <div class="f-icon-lg">🖱️ 👈</div>
+            <h4 style="color: var(--cyan-accent); margin-bottom: 4px;">Xaritani Surish (Pan)</h4>
+            <p style="font-size: 11.5px;">Sichqonchaning <strong>chap tugmasini (LMB)</strong> bosib ushlab xaritani istalgan tomonga erkin suring.</p>
+          </div>
+
+          <div class="intro-feature-box text-center">
+            <div class="f-icon-lg">🔄 🖱️</div>
+            <h4 style="color: var(--yellow-accent); margin-bottom: 4px;">3D Aylantirish (Orbit)</h4>
+            <p style="font-size: 11.5px;">Sichqonchaning <strong>o'ng tugmasi</strong> yoki <strong>g'ildiragini</strong> bosib kamerani 360° burang.</p>
+          </div>
+
+          <div class="intro-feature-box text-center">
+            <div class="f-icon-lg">🔍 📜</div>
+            <h4 style="color: var(--green-accent); margin-bottom: 4px;">Masshtab (Zoom)</h4>
+            <p style="font-size: 11.5px;">G'ildirakni aylantirib yaqinlashtiring yoki <strong>W, A, S, D</strong> tugmalaridan foydalaning.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 3: Core Gameplay Loop -->
+      <div class="intro-slide" style="display: none;">
+        <div class="intro-hero">
+          <span class="intro-hero-icon">🌾</span>
+          <h2 class="intro-title">3 Oddiy Qadamda Boshlang</h2>
+          <p class="intro-subtitle">Qishloq xo'jaligi infratuzilmasini quring va hosil oling</p>
+        </div>
+
+        <div class="intro-steps-row">
+          <div class="step-card">
+            <div class="step-badge">1</div>
+            <div class="step-icon">🚰</div>
+            <h4>Quvur Yotqizing</h4>
+            <p>Daryo nasosidan boshlab ekin ekmoqchi bo'lgan joyingizgacha suv quvuri o'tkazing.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">2</div>
+            <div class="step-icon">🌱</div>
+            <h4>Ekin Eking</h4>
+            <p>Pastki menyudan ekin turini (Paxta, Bug'doy, Bog') tanlab katak ustiga bosing.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-badge">3</div>
+            <div class="step-icon">💧</div>
+            <h4>Sug'orishni O'rnating</h4>
+            <p>Egat, Tomchilatkich yoki SDI o'rnating. Suv yetib borgach ekin o'sishni boshlaydi!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Slide 4: SCADA & Victory -->
+      <div class="intro-slide" style="display: none;">
+        <div class="intro-hero">
+          <span class="intro-hero-icon">🤖 ➔ 🏆</span>
+          <h2 class="intro-title">Smart SCADA, AI & G'alaba</h2>
+          <p class="intro-subtitle">Texnologiyalarni oching va cho'lni gullating</p>
+        </div>
+
+        <div class="intro-grid-2">
+          <div class="intro-feature-box">
+            <div class="feature-head"><span class="f-icon">📡</span> <strong>SCADA & AI Dozalash</strong></div>
+            <p><strong>SCADA</strong> tugmasi orqali tuproq namligi grafiklarini kuzating va <strong>AI Avto-Dozalash</strong>ni yoqib, suv isrofini nolga tushiring!</p>
+          </div>
+
+          <div class="intro-feature-box">
+            <div class="feature-head"><span class="f-icon">🏆</span> <strong>G'alaba Shartlari</strong></div>
+            <p>Ekinlarni pishganda yig'ing (💰 daromad), <strong>Tech Tree</strong> dan 4-bosqich AI ni oching va Oasis Index ni <strong>85%+</strong> ga yetkazing!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Intro Footer Controls -->
+      <div class="intro-footer">
+        <label class="intro-checkbox-label">
+          <input type="checkbox" id="intro-dont-show-again">
+          <span>Keyingi safar avtomatik ko'rsatilmasin</span>
+        </label>
+
+        <div class="intro-btn-group">
+          <button id="btn-intro-prev" class="action-btn" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #cfd8dc; visibility: hidden;">
+            ⬅️ Oldingi
+          </button>
+          <button id="btn-intro-next" class="action-btn" style="background: rgba(0,240,255,0.2); border-color: var(--cyan-accent); color: var(--cyan-accent);">
+            Keyingi ➡️
+          </button>
+          <button id="btn-intro-start" class="action-btn" style="display: none; background: linear-gradient(90deg, #00e676, #00f0ff); color: #000; font-weight: 800; border: none; box-shadow: 0 0 16px rgba(0, 230, 118, 0.5);">
+            🚀 Missiyani Boshlash!
+          </button>
         </div>
       </div>
     </div>

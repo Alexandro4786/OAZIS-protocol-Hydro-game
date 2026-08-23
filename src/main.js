@@ -12,6 +12,7 @@ import { Terraformer } from './render/Terraformer.js';
 import { TechTreeModal } from './ui/TechTreeModal.js';
 import { ScadaModal } from './ui/ScadaModal.js';
 import { UIManager } from './ui/UIManager.js';
+import { TutorialGuide } from './ui/TutorialGuide.js';
 import { CROP_TYPES, IRRIGATION_TECH, BUILDINGS } from './config.js';
 
 class OasisGame {
@@ -36,6 +37,7 @@ class OasisGame {
     this.techTreeModal = new TechTreeModal(this.gameState, this.audioManager);
     this.scadaModal = new ScadaModal(this.scadaEngine, this.gameState, this.audioManager);
     this.uiManager = new UIManager(this.gameState, this.gridWorld, this.audioManager, this.crisisManager);
+    this.tutorialGuide = new TutorialGuide(this.audioManager, this.gameState);
 
     // Ob-havo
     this.weather = {
