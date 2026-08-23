@@ -13,18 +13,18 @@ export class GridWorld {
     for (let x = 0; x < this.size; x++) {
       this.tiles[x] = [];
       for (let y = 0; y < this.size; y++) {
-        // Daryo/kanal tabiiy oqimi: x = 0 ustunida yoki yuqori burchakda daryo bo'ladi
-        const isRiver = (x === 0 && y >= 3 && y <= 12) || (x === 1 && y >= 6 && y <= 9);
+        // Daryo/kanal tabiiy oqimi: x = 0 ustunida to'liq tekis kanal oqadi
+        const isRiver = x === 0;
         
         this.tiles[x][y] = {
           x,
           y,
           id: `${x}_${y}`,
           type: isRiver ? 'river' : 'desert', // river, desert, cultivated, oasis
-          moisture: isRiver ? 100 : (12 + Math.random() * 8), // % VWC
-          salinity: 5 + Math.random() * 5, // %
-          temperature: 28,
-          elevation: Math.sin(x * 0.4) * Math.cos(y * 0.4) * 0.3,
+          moisture: isRiver ? 100 : (18 + Math.random() * 6), // % VWC
+          salinity: 4 + Math.random() * 4, // %
+          temperature: 24,
+          elevation: 0.0, // Barcha kataklar mukammal tekis va bir xil balandlikda!
           
           // Ekin ma'lumotlari
           crop: null, // { type: 'cotton', stage: 0..4, progress: 0..100, health: 100, daysAlive: 0 }

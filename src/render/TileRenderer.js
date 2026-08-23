@@ -25,7 +25,7 @@ export class TileRenderer {
   }
 
   initMeshes() {
-    const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.96, 0.4, TILE_SIZE * 0.96);
+    const tileGeo = new THREE.BoxGeometry(TILE_SIZE * 0.98, 0.35, TILE_SIZE * 0.98);
     // Base tile material
     const baseMat = new THREE.MeshStandardMaterial({
       roughness: 0.85,
@@ -43,7 +43,7 @@ export class TileRenderer {
         
         mesh.position.set(
           x * TILE_SIZE + TILE_SIZE / 2,
-          -0.2 + tileData.elevation,
+          tileData.type === 'river' ? -0.22 : -0.175,
           y * TILE_SIZE + TILE_SIZE / 2
         );
         mesh.receiveShadow = true;
@@ -69,7 +69,7 @@ export class TileRenderer {
           waterMesh.rotation.x = -Math.PI / 2;
           waterMesh.position.set(
             x * TILE_SIZE + TILE_SIZE / 2,
-            0.02 + tileData.elevation,
+            0.02,
             y * TILE_SIZE + TILE_SIZE / 2
           );
           this.scene.add(waterMesh);
