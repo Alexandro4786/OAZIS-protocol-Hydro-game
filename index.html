@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oasis Protocol: Hydro Strategy | Suv Risolasi</title>
+  <link rel="stylesheet" href="/src/styles/main.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💧</text></svg>">
+</head>
+<body>
+  <!-- 3D WebGL Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- Top HUD Bar -->
+  <header id="top-bar" class="glass-panel">
+    <div class="logo-area">
+      <span class="logo-icon">💧</span>
+      <div>
+        <div class="logo-title">OASIS PROTOCOL</div>
+        <div class="logo-sub">Suv Risolasi & Ekologik Strategiya</div>
+      </div>
+    </div>
+
+    <!-- Resource Stats -->
+    <div class="resource-stats">
+      <!-- Byudjet -->
+      <div class="stat-box" title="Mavjud mablag'">
+        <span class="stat-icon">💰</span>
+        <div class="stat-info">
+          <span class="stat-label">Byudjet</span>
+          <span id="stat-budget" class="stat-value" style="color: #00e676;">$2,500</span>
+        </div>
+      </div>
+
+      <!-- Er Usti Suvi -->
+      <div class="stat-box" title="Kanal va Daryo suv zaxirasi">
+        <span class="stat-icon">🏞️</span>
+        <div class="stat-info">
+          <span class="stat-label">Daryo Suvi</span>
+          <span id="stat-surface-water" class="stat-value" style="color: #00f0ff;">6,000 m³</span>
+        </div>
+      </div>
+
+      <!-- Akvifer (Yer osti suvlari) -->
+      <div class="stat-box" title="Yer osti akvifer zaxirasi (haddan tashqari tortilsa sho'rlanadi)">
+        <span class="stat-icon">🌊</span>
+        <div class="stat-info">
+          <span class="stat-label">Akvifer Zaxirasi</span>
+          <span id="stat-aquifer" class="stat-value" style="color: #4fc3f7;">15,000 m³</span>
+        </div>
+      </div>
+
+      <!-- O'rtacha Tuproq Namligi -->
+      <div class="stat-box" title="Kataklarning o'rtacha namlik darajasi">
+        <span class="stat-icon">🌱</span>
+        <div class="stat-info">
+          <span class="stat-label">Tuproq Namligi</span>
+          <span id="stat-moisture" class="stat-value" style="color: #aed581;">45% VWC</span>
+        </div>
+      </div>
+
+      <!-- Eko-Ball (Oasis Index) -->
+      <div class="stat-box eco-score-box" title="Oasis Index: Suvni tejash va hosildorlik darajasi">
+        <span class="stat-icon">✨</span>
+        <div class="stat-info">
+          <span class="stat-label">Oasis Index</span>
+          <span id="stat-eco-score" class="stat-value" style="color: #00e676;">15%</span>
+          <div class="eco-progress-bar">
+            <div id="eco-progress-fill" class="eco-progress-fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ob-havo & Bug'lanish (ET0) -->
+      <div class="stat-box" title="Kun, fasl va bug'lanish indeksi">
+        <span class="stat-icon">☀️</span>
+        <div class="stat-info">
+          <span id="stat-season-day" class="stat-label">1-kun • Bahor</span>
+          <span id="stat-temp-et0" class="stat-value" style="color: #ffb74d;">28°C (ET₀: 4.5)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="top-controls">
+      <button id="btn-speed-pause" class="icon-btn" title="To'xtatish (Space)">⏸️</button>
+      <button id="btn-speed-1x" class="icon-btn active" title="Oddiy tezlik">1x</button>
+      <button id="btn-speed-2x" class="icon-btn" title="Tezlashtirish">2x</button>
+      <button id="btn-speed-5x" class="icon-btn" title="Juda tez">5x</button>
+      <button id="btn-scada-modal" class="icon-btn" title="SCADA & AI IoT Boshqaruv Markazi">📡 SCADA</button>
+      <button id="btn-tech-modal" class="icon-btn" title="Sug'orish Texnologiyalari Daraxti">🧬 Tech Tree</button>
+      <button id="btn-audio-toggle" class="icon-btn" title="Ovozni yoqish/o'chirish">🔊</button>
+      <button id="btn-help-modal" class="icon-btn" title="Qo'llanma va qoidalar">❓</button>
+      <button id="btn-restart-game" class="icon-btn" style="border-color: rgba(255, 23, 68, 0.4); color: #ff8a80;" title="O'yinni yangitdan boshlash">🔄 Qayta Boshlash</button>
+    </div>
+  </header>
+
+  <!-- Heatmaps Floating Bar -->
+  <div id="heatmap-dock" class="glass-panel">
+    <div style="font-size: 9px; color: var(--text-muted); text-transform: uppercase; font-weight: 700; padding: 2px 4px;">Xaritalar (Heatmap)</div>
+    <button class="heatmap-btn active" data-heatmap="none">🌐 Tabiiy 3D</button>
+    <button class="heatmap-btn" data-heatmap="moisture">💧 Namlik (VWC%)</button>
+    <button class="heatmap-btn" data-heatmap="loss">🔥 Suv Yo'qotish</button>
+    <button class="heatmap-btn" data-heatmap="salinity">🧂 Sho'rlanish</button>
+    <button class="heatmap-btn" data-heatmap="iot">📡 IoT Qamrovi</button>
+  </div>
+
+  <!-- Active Crisis Banner (Hidden by default) -->
+  <div id="crisis-banner" class="glass-panel" style="display: none;">
+    <span id="crisis-icon" style="font-size: 24px;">🔥</span>
+    <div>
+      <div id="crisis-title" style="font-weight: 700; color: #ff3d00;">ISSIQLIK TO'LQINI</div>
+      <div id="crisis-desc" style="font-size: 11px; color: #ffe0b2;">Bug'lanish 200% ga oshdi!</div>
+    </div>
+    <div id="crisis-timer" style="font-size: 14px; font-weight: 800; color: #ffeb3b; padding-left: 10px;">00:30</div>
+    <button id="btn-crisis-fix" class="action-btn" style="display: none; padding: 6px 12px; margin-left: 10px;">Ta'mirlash (-$150)</button>
+  </div>
+
+  <!-- Selected Tile Inspector (Right Panel) -->
+  <div id="inspector-panel" class="glass-panel" style="display: none;">
+    <div class="inspector-header">
+      <span class="inspector-title" id="insp-coord">Katak [0, 0]</span>
+      <button id="insp-close" style="background: none; border: none; color: var(--text-muted); cursor: pointer;">✕</button>
+    </div>
+    
+    <div class="inspector-row">
+      <span>Turi:</span>
+      <span id="insp-type" class="inspector-value">Cho'l tuprog'i</span>
+    </div>
+    <div class="inspector-row">
+      <span>Tuproq Namligi:</span>
+      <span id="insp-moisture" class="inspector-value">18% (Quruq)</span>
+    </div>
+    <div class="inspector-row">
+      <span>Sho'rlanish darajasi:</span>
+      <span id="insp-salinity" class="inspector-value">6%</span>
+    </div>
+    <div class="inspector-row">
+      <span>Infratuzilma:</span>
+      <span id="insp-building" class="inspector-value">Yo'q</span>
+    </div>
+    <div class="inspector-row">
+      <span>Sug'orish usuli:</span>
+      <span id="insp-irrigation" class="inspector-value">Mavjud emas</span>
+    </div>
+    <div class="inspector-row">
+      <span>Ekin holati:</span>
+      <span id="insp-crop" class="inspector-value">Ekilmagan</span>
+    </div>
+    <div class="inspector-row">
+      <span>Oqim tezligi:</span>
+      <span id="insp-flow" class="inspector-value">0.0 m³/soat</span>
+    </div>
+    <div class="inspector-row">
+      <span>IoT va Suv tarmog'i:</span>
+      <span id="insp-network" class="inspector-value">Ulanmagan</span>
+    </div>
+
+    <!-- Inspector Action Buttons -->
+    <div class="inspector-actions">
+      <button id="btn-insp-harvest" class="action-btn" style="display: none;">🌾 Hosilni yig'ish</button>
+      <button id="btn-insp-toggle-irrigation" class="action-btn" style="display: none;">💧 Klapanni yopish</button>
+      <button id="btn-insp-demolish" class="action-btn danger">🧹 Tozalash / Buzish</button>
+    </div>
+  </div>
+
+  <!-- Bottom Control Dock -->
+  <div id="bottom-dock">
+    <!-- Category Tabs -->
+    <div class="tab-selector glass-panel">
+      <button class="tab-btn active" data-tab="survey">🔍 Tahlil</button>
+      <button class="tab-btn" data-tab="crops">🌱 Ekinlar</button>
+      <button class="tab-btn" data-tab="irrigation">💧 Sug'orish Tizimlari</button>
+      <button class="tab-btn" data-tab="infra">🏗️ Infratuzilma</button>
+      <button class="tab-btn" data-tab="demolish">🧹 Buzish</button>
+    </div>
+
+    <!-- Tools Palette -->
+    <div id="tools-container" class="tools-palette glass-panel">
+      <!-- Dynamically filled by UIManager -->
+    </div>
+  </div>
+
+  <!-- Notifications Toast Container -->
+  <div id="notifications-container"></div>
+
+  <!-- SCADA & AI Modal -->
+  <div id="scada-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content glass-panel">
+      <button class="modal-close-btn" data-close="scada-modal">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">📡</span>
+        <h2 style="font-size: 18px; color: var(--cyan-accent);">Smart SCADA & AI Fuzzy-PID Boshqaruv Markazi</h2>
+      </div>
+
+      <!-- Real-time Canvas Charts -->
+      <div style="background: rgba(0, 0, 0, 0.4); padding: 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-size: 12px; font-weight: 600; color: #aed581;">📈 Telemetriya: Tuproq Namligi (% VWC) & Optimal Setpoint</span>
+          <span style="font-size: 11px; color: var(--text-muted);">Real-vaqt dinamikasi</span>
+        </div>
+        <canvas id="scada-chart-moisture" width="700" height="150" style="width: 100%; height: 150px;"></canvas>
+      </div>
+
+      <!-- AI Controls -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div style="background: rgba(255, 255, 255, 0.03); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+          <h3 style="font-size: 13px; color: var(--yellow-accent); margin-bottom: 8px;">🎯 Maqsadli Namlik (Setpoint %): <span id="scada-sp-val">60%</span></h3>
+          <input type="range" id="scada-sp-slider" min="30" max="85" value="60" style="width: 100%; accent-color: var(--cyan-accent);">
+          <p style="font-size: 10.5px; color: var(--text-muted); margin-top: 6px;">Fuzzy-PID regulyatori VFD nasoslarni shu me'yorga mos ravishda boshqaradi.</p>
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.03); padding: 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="font-size: 13px; color: var(--green-accent);">🤖 AI Avto-Dozalash (Weather Predictor)</h3>
+            <input type="checkbox" id="scada-ai-toggle" checked style="width: 18px; height: 18px; accent-color: var(--green-accent);">
+          </div>
+          <p style="font-size: 10.5px; color: var(--text-muted); margin-top: 8px;">AI kunlik bug'lanish ($ET_0$) va issiqlik prognozini inobatga olib, suv berishni avtomatik ravishda minimal isrofgacha pasaytiradi.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tech Tree Modal -->
+  <div id="tech-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content glass-panel">
+      <button class="modal-close-btn" data-close="tech-modal">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">🧬</span>
+        <h2 style="font-size: 18px; color: var(--cyan-accent);">Sug'orish Texnologiyalari Daraxti (Tech Tree)</h2>
+      </div>
+      <p style="font-size: 11.5px; color: var(--text-muted);">
+        An'anaviy isrofgarchilikdan to'liq avtomatlashtirilgan aqlli sug'orishga o'ting. Yangi texnologiyalarni ochish uchun byudjet va yuqori Eko-Ball (Oasis Index) talab qilinadi.
+      </p>
+
+      <div id="tech-tree-container" class="tech-grid">
+        <!-- Dynamically generated nodes -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Tutorial / Help Modal -->
+  <div id="help-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content glass-panel">
+      <button class="modal-close-btn" data-close="help-modal">✕</button>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">📖</span>
+        <h2 style="font-size: 18px; color: var(--cyan-accent);">Oasis Protocol: Strategik Qo'llanma</h2>
+      </div>
+      
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px; line-height: 1.5; color: #cfd8dc;">
+        <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px;">
+          <h4 style="color: var(--cyan-accent); margin-bottom: 4px;">1. Suv va Quvur Infratuzilmasi</h4>
+          <p>Kanal nasosidan yoki chuqur arteziyan quduqdan boshlab ekin maydonlarigacha quvur (🚰) yotqizing. Suv yetib bormasa, sug'orish tizimi ishlamaydi.</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px;">
+          <h4 style="color: var(--yellow-accent); margin-bottom: 4px;">2. Texnologik Bosqichlar va Isrof</h4>
+          <p><strong>Egatlab sug'orish</strong> suvning 55% ini havoga bug'lantiradi va tuproqni sho'rlantiradi. Tezroq <strong>Tomchilatish</strong>, <strong>SDI (Er osti)</strong> va <strong>Smart SCADA</strong> ga o'ting!</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px;">
+          <h4 style="color: var(--green-accent); margin-bottom: 4px;">3. Ekinlar va Hosil</h4>
+          <p>Paxta ko'p daromad keltiradi lekin suvni ko'p ichadi. Mevali bog'lar va Agroo'rmon (Saksovul) esa cho'llanishni to'xtatib, Eko-Ballni keskin oshiradi.</p>
+        </div>
+        <div style="background: rgba(255,255,255,0.04); padding: 12px; border-radius: 8px;">
+          <h4 style="color: #ff7043; margin-bottom: 4px;">4. Boshqaruv (Kamera)</h4>
+          <p>Sichqonchaning o'ng tugmasi yoki g'ildiragini bosib kamerani aylantiring. G'ildirak orqali yaqinlashtiring. <strong>W, A, S, D</strong> yoki strelkalar yordamida xaritani suring.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Restart Confirmation Modal -->
+  <div id="restart-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content glass-panel" style="text-align: center; max-width: 440px;">
+      <div style="font-size: 48px; margin-bottom: 8px;">🔄</div>
+      <h2 style="font-size: 20px; color: var(--yellow-accent); margin-bottom: 8px;">O'yinni Qayta Boshlaysizmi?</h2>
+      <p style="font-size: 12.5px; color: #cfd8dc; margin-bottom: 20px; line-height: 1.5;">
+        Barcha qurilgan quvurlar, ekinlar va ochilgan texnologiyalar nollanadi va boshlang'ich holatga qaytadi.
+      </p>
+      <div style="display: flex; gap: 10px; justify-content: center;">
+        <button id="btn-confirm-restart" class="action-btn danger" style="padding: 10px 18px;">Ha, Qayta Boshlash</button>
+        <button id="btn-cancel-restart" class="action-btn" style="padding: 10px 18px; background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); color: #fff;">Bekor Qilish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Game Modal (Victory / Defeat) -->
+  <div id="endgame-modal" class="modal-backdrop" style="display: none;">
+    <div class="modal-content glass-panel" style="text-align: center; max-width: 480px;">
+      <div id="endgame-icon" style="font-size: 56px; margin-bottom: 10px;">🏆</div>
+      <h2 id="endgame-title" style="font-size: 22px; margin-bottom: 10px; color: var(--green-accent);">G'ALABA!</h2>
+      <p id="endgame-reason" style="font-size: 13px; color: #eceff1; margin-bottom: 20px; line-height: 1.5;">
+        Tabriklaymiz! Siz qurg'oqchil cho'lni yashil, o'zini-o'zi ta'minlovchi oazisga aylantirdingiz!
+      </p>
+      <button id="btn-restart" class="action-btn" style="padding: 12px 24px; font-size: 14px;">Qaytadan Boshlash</button>
+    </div>
+  </div>
+
+  <!-- Main JavaScript App -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
