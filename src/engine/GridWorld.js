@@ -109,10 +109,18 @@ export class GridWorld {
         // b) Namlikning tabiiy pasayishi
         tile.moisture = Math.max(5, tile.moisture - evaporationLoss);
 
-        // c) Sug'orish oqimi
+        // c) Sug'orish oqimi (Quvur yoki nasos ulangan bo'lsa avtomatik sug'oradi)
         tile.waterLossRate = 0;
-        if (tile.irrigation && tile.irrigationActive && tile.isConnectedToWater) {
-          this.applyIrrigation(tile, dt, weather);
+        if (tile.isConnectedToWater) {
+          // Agar ekin yoki quvur bo'lsa-yu sug'orish turi tanlanmagan bo'lsa,
+          // avtomatik ravishda bazaviy sug'orish (Egat/Quvur) ishga tushadi
+          if (!tile.irrigation && (tile.crop || tile.hasPipe)) {
+            tile.irrigation = 'furrow';
+            tile.irrigationActive = true;
+          }
+          if (tile.irrigation && tile.irrigationActive) {
+            this.applyIrrigation(tile, dt, weather);
+          }
         }
 
         // d) O'simlik suv iste'moli va o'sishi
@@ -150,7 +158,7 @@ export class GridWorld {
   }
 
   applyIrrigation(tile, dt, weather) {
-    const tech = IRRIGATION_TECH[tile.irrigation];
+    const tech = IRRIGATION_TECH[tile.irrigation] || IRRIGATION_TECH['furrow'];
     if (!tech) return;
 
     // AI SCADA / Fuzzy-PID boshqaruvi
@@ -213,14 +221,14 @@ export class GridWorld {
     const isSalineToxic = (tile.salinity / 100) > cropConfig.salinityTolerance;
 
     if (isOptimal && !isSalineToxic) {
-      tile.crop.health = Math.min(100, tile.crop.health + 2 * dt);
-      tile.crop.progress += (100 / cropConfig.growDays) * 0.1 * dt;
+      tile.crop.health = Math.min(100, tile.crop.health + 3.0 * dt);
+      tile.crop.progress += (100 / cropConfig.growDays) * 0.12 * dt;
     } else if (isDry || isFlooded || isSalineToxic) {
-      tile.crop.health = Math.max(0, tile.crop.health - 4 * dt);
+      tile.crop.health = Math.max(0, tile.crop.health - 1.2 * dt);
     }
 
     // O'simlik suv ichishi
-    const waterIntake = cropConfig.waterNeed * 0.05 * dt;
+    const waterIntake = cropConfig.waterNeed * 0.04 * dt;
     tile.moisture = Math.max(0, tile.moisture - waterIntake);
 
     // O'sish bosqichlari (0: Ekish, 1: Nihol, 2: Gullash, 3: Pishish, 4: Hosil yetildi)

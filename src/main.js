@@ -182,9 +182,25 @@ class OasisGame {
             daysAlive: 0,
             isWithered: false
           };
+          if (tile.isConnectedToWater) {
+            tile.moisture = Math.max(tile.moisture, 55); // Boshlang'ich urug' sug'orishi
+            if (!tile.irrigation) tile.irrigation = 'furrow';
+            tile.irrigationActive = true;
+          }
+          this.gridWorld.updateNetworkConnectivity();
           this.audioManager.playBuild();
           this.buildingRenderer.sync();
-          this.gameState.emit('notify', { type: 'success', message: `${cropConfig.name} ekildi (-$${cropConfig.seedCost})` });
+          if (tile.isConnectedToWater) {
+            this.gameState.emit('notify', {
+              type: 'success',
+              message: `${cropConfig.name} ekildi va quvur orqali suv berilmoqda! 💧 (-$${cropConfig.seedCost})`
+            });
+          } else {
+            this.gameState.emit('notify', {
+              type: 'warning',
+              message: `${cropConfig.name} ekildi (-$${cropConfig.seedCost}). ⚠️ Suv ulanmagan! Daryo nasosidan quvur torting.`
+            });
+          }
         }
       }
       return;
