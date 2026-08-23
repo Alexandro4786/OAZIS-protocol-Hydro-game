@@ -13,7 +13,7 @@ import { TechTreeModal } from './ui/TechTreeModal.js';
 import { ScadaModal } from './ui/ScadaModal.js';
 import { UIManager } from './ui/UIManager.js';
 import { TutorialGuide } from './ui/TutorialGuide.js';
-import { CROP_TYPES, IRRIGATION_TECH, BUILDINGS, WEATHER_PRESETS } from './config.js';
+import { CROP_TYPES, IRRIGATION_TECH, BUILDINGS, WEATHER_PRESETS, SEASONS } from './config.js';
 
 class OasisGame {
   constructor() {
@@ -352,9 +352,25 @@ class OasisGame {
     const gameDt = dt * this.gameState.speed;
     const res = this.gameState.resources;
 
-    // Kun va vaqt hisobi
+    // Kun, fasl va yil hisobi (4 Fasl Tsikli: Bahor, Yoz, Kuz, Qish)
     res.timeOfDay = (res.timeOfDay + gameDt * 0.4) % 24;
     res.day += gameDt * 0.016;
+
+    const dayInYear = ((Math.floor(res.day) - 1) % 48) + 1;
+    const year = Math.floor((res.day - 1) / 48) + 1;
+    const currentSeason = SEASONS.find(s => dayInYear >= s.dayRange[0] && dayInYear <= s.dayRange[1]) || SEASONS[0];
+
+    if (res.seasonId !== currentSeason.id) {
+      res.season = currentSeason.name;
+      res.seasonId = currentSeason.id;
+      res.year = year;
+      this.gameState.emit('seasonChanged', currentSeason);
+      this.gameState.emit('notify', {
+        type: 'success',
+        message: `${currentSeason.icon} Yangi Fasl Boshlandi: ${currentSeason.name} mavsumi! (${year}-Yil) ${currentSeason.desc}`
+      });
+      this.audioManager.playLevelUp();
+    }
 
     // 1. Dinamik Tabiiy Meteorologik Tsikl (Realistic Meteorological Markov Chain)
     this.weatherTimer -= gameDt;
@@ -394,13 +410,14 @@ class OasisGame {
       }
     }
 
-    // 2. Ob-havo ko'rsatkichlarini hisoblash
+    // 2. Fasl va Ob-havo ko'rsatkichlarini hisoblash
     const hour = res.timeOfDay;
-    let baseTemp = 24 + Math.sin(((hour - 6) / 12) * Math.PI) * 10;
-    if (hour < 6 || hour > 20) baseTemp = 18;
-    baseTemp += this.weatherPreset.tempMod;
+    const seasonTemp = currentSeason.baseTemp || 22;
+    let diurnalVariation = Math.sin(((hour - 6) / 12) * Math.PI) * 7;
+    if (hour < 6 || hour > 20) diurnalVariation = -5;
 
-    let baseEt0 = (3.5 + (baseTemp / 30) * 2.0) * this.weatherPreset.et0Mod;
+    let baseTemp = seasonTemp + diurnalVariation + this.weatherPreset.tempMod;
+    let baseEt0 = (currentSeason.baseEt0 || 4.0) * (Math.max(5, baseTemp) / Math.max(10, seasonTemp)) * this.weatherPreset.et0Mod;
 
     // Inqiroz ta'siri
     if (this.crisisManager.activeCrisis) {

@@ -393,20 +393,21 @@ export class UIManager {
     this.statEcoScore.innerText = `${Math.round(res.ecoScore)}%`;
     this.ecoProgressFill.style.width = `${Math.min(100, res.ecoScore)}%`;
 
-    // Ob-havo ko'rsatkichi
+    // Ob-havo va Fasl ko'rsatkichi
     const weatherIcon = weather.icon || '☀️';
     const weatherName = weather.name || 'Quyoshli';
+    const seasonName = res.season || 'Bahor';
     const wIconEl = document.getElementById('weather-icon');
     const wNameEl = document.getElementById('stat-weather-name');
     if (wIconEl) wIconEl.innerText = weatherIcon;
-    if (wNameEl) wNameEl.innerText = `${weatherName} • ${Math.floor(res.day)}-kun`;
+    if (wNameEl) wNameEl.innerText = `${seasonName} • ${Math.floor(res.day)}-kun • ${weatherName}`;
     
     let extraMeteo = `💨 ${weather.windSpeed || 3}m/s`;
     if (weather.rainRate && weather.rainRate > 0) {
       extraMeteo = `🌧️ +${weather.rainRate}mm • 💨 ${weather.windSpeed || 3}m/s`;
     }
     if (this.statTempEt0) {
-      this.statTempEt0.innerHTML = `${Math.round(weather.temperature)}°C <span class="et0-sub">(${extraMeteo})</span>`;
+      this.statTempEt0.innerHTML = `${Math.round(weather.temperature)}°C <span class="et0-sub">(ET₀: ${weather.et0.toFixed(1)} • ${extraMeteo})</span>`;
     }
 
     // Inqiroz Bannerini yangilash

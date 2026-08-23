@@ -13,13 +13,63 @@ export const INITIAL_RESOURCES = {
   ecoScore: 15,          // Boshlang'ich Eko-Ball (Oasis Index) 0..100
   day: 1,
   season: 'Bahor',       // Bahor, Yoz, Kuz, Qish
+  seasonId: 'spring',
+  year: 1,
   timeOfDay: 8.0,        // 0..24 soat
-  temperature: 28,       // Gradus C
-  et0: 4.5,              // Boshlang'ich bug'lanish indeksi (mm/kun)
+  temperature: 24,       // Gradus C
+  et0: 4.0,              // Boshlang'ich bug'lanish indeksi (mm/kun)
   salinityRisk: 0,
   waterSavedTotal: 0,
   harvestCountTotal: 0
 };
+
+// 4 Ta Fasl Tizimi (4 Seasons Cycle)
+export const SEASONS = [
+  {
+    id: 'spring',
+    name: 'Bahor',
+    icon: '🌸',
+    color: '#81c784',
+    dayRange: [1, 12],
+    baseTemp: 22,
+    baseEt0: 4.0,
+    desc: "Ekish mavsumi. Mayin yomg'irlar, iliq quyosh va uyg'ongan tabiat.",
+    skyTint: '#121e33'
+  },
+  {
+    id: 'summer',
+    name: 'Yoz',
+    icon: '☀️',
+    color: '#ffb74d',
+    dayRange: [13, 24],
+    baseTemp: 34,
+    baseEt0: 7.5,
+    desc: "Jazira issiq fasli. Bug'lanish yuqori, garmsel va jala ehtimoli bor. Sug'orish nazorati zarur!",
+    skyTint: '#1a2233'
+  },
+  {
+    id: 'autumn',
+    name: 'Kuz',
+    icon: '🍂',
+    color: '#ff8a65',
+    dayRange: [25, 36],
+    baseTemp: 18,
+    baseEt0: 3.2,
+    desc: "Mo'l hosil terish fasli. Havo salqin, bug'lanish pasaygan.",
+    skyTint: '#151b28'
+  },
+  {
+    id: 'winter',
+    name: 'Qish',
+    icon: '❄️',
+    color: '#80deea',
+    dayRange: [37, 48],
+    baseTemp: 6,
+    baseEt0: 1.5,
+    desc: "Sovuq sokin qish fasli. Bug'lanish deyarli nol, daryo va akvifer zaxira yig'moqda.",
+    skyTint: '#0d131f'
+  }
+];
 
 // Professional Meteorologik Ob-Havo Turlari va Tabiiy Ketma-ketlik (State Machine)
 export const WEATHER_PRESETS = {
