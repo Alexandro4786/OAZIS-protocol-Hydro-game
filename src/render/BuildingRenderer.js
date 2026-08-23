@@ -451,28 +451,192 @@ export class BuildingRenderer {
         cropGroup.add(stalk);
       }
     } else if (cropType === 'orchard') {
-      // Mevali daraxt
-      const trunkGeo = new THREE.CylinderGeometry(0.12, 0.18, 1.0 + stage * 0.3, 6);
-      const trunkMat = new THREE.MeshStandardMaterial({ color: isWithered ? 0x3e2723 : 0x4e342e });
-      const trunk = new THREE.Mesh(trunkGeo, trunkMat);
-      trunk.position.y = (1.0 + stage * 0.3) / 2;
-      trunk.castShadow = true;
-      cropGroup.add(trunk);
+      // ===== INTENSIV MEVALI OLMA BOG'I =====
+      if (isWithered) {
+        // 1. Qurigan olma daraxti (Bargsiz, qaqragan shoxlar)
+        const deadTrunkMat = new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 0.9 });
+        const trunkGeo = new THREE.CylinderGeometry(0.12, 0.22, 1.6, 6);
+        const trunk = new THREE.Mesh(trunkGeo, deadTrunkMat);
+        trunk.position.y = 0.8;
+        trunk.rotation.z = 0.15;
+        cropGroup.add(trunk);
 
-      const foliageGeo = new THREE.SphereGeometry(isWithered ? (0.4 + stage * 0.1) : (0.6 + stage * 0.2), 7, 7);
-      const foliage = new THREE.Mesh(foliageGeo, plantMat);
-      foliage.position.y = 1.0 + stage * 0.4;
-      foliage.castShadow = true;
-      cropGroup.add(foliage);
+        // Qaqragan yon shoxlar
+        for (let b = 0; b < 4; b++) {
+          const branchGeo = new THREE.CylinderGeometry(0.04, 0.08, 0.8, 5);
+          const branch = new THREE.Mesh(branchGeo, deadTrunkMat);
+          const angle = (b / 4) * Math.PI * 2;
+          branch.position.set(Math.cos(angle) * 0.3, 1.2, Math.sin(angle) * 0.3);
+          branch.rotation.set(Math.sin(angle) * 0.8, angle, Math.cos(angle) * 0.8);
+          cropGroup.add(branch);
+        }
+      } else {
+        // 2. Tirik va sog'lom olma daraxti
+        const barkMat = new THREE.MeshStandardMaterial({ color: 0x4e342e, roughness: 0.8 });
+        
+        // Ildiz asosi (Root flare)
+        const rootGeo = new THREE.ConeGeometry(0.32, 0.35, 6);
+        const root = new THREE.Mesh(rootGeo, barkMat);
+        root.position.y = 0.17;
+        cropGroup.add(root);
 
-      // Qizil olmalar
-      if (stage >= 3 && !isWithered) {
-        const fruitMat = new THREE.MeshStandardMaterial({ color: 0xe53935 });
-        for (let i = 0; i < 4; i++) {
-          const fruitGeo = new THREE.SphereGeometry(0.1, 5, 5);
-          const fruit = new THREE.Mesh(fruitGeo, fruitMat);
-          fruit.position.set((Math.random() - 0.5) * 0.8, 1.2 + Math.random() * 0.5, (Math.random() - 0.5) * 0.8);
-          cropGroup.add(fruit);
+        // Asosiy tana (Trunk)
+        const trunkHeight = 1.0 + stage * 0.25;
+        const trunkGeo = new THREE.CylinderGeometry(0.12, 0.18, trunkHeight, 7);
+        const trunk = new THREE.Mesh(trunkGeo, barkMat);
+        trunk.position.y = trunkHeight / 2;
+        trunk.castShadow = true;
+        cropGroup.add(trunk);
+
+        // Shox-shabbalar (Branches)
+        if (stage >= 1) {
+          for (let b = 0; b < 3; b++) {
+            const bGeo = new THREE.CylinderGeometry(0.05, 0.09, 0.6, 5);
+            const bMesh = new THREE.Mesh(bGeo, barkMat);
+            const angle = (b / 3) * Math.PI * 2 + 0.4;
+            bMesh.position.set(Math.cos(angle) * 0.2, trunkHeight * 0.8, Math.sin(angle) * 0.2);
+            bMesh.rotation.set(Math.cos(angle) * 0.6, angle, Math.sin(angle) * 0.6);
+            cropGroup.add(bMesh);
+          }
+        }
+
+        // Barglar toji (Multi-layered Fluffy Canopy)
+        const crownScale = 0.5 + stage * 0.22;
+        const leafColor = stage === 2 ? 0x558b2f : (tile.crop.health < 40 ? 0x9e9d24 : 0x2e7d32);
+        const leafMat = new THREE.MeshStandardMaterial({
+          color: leafColor,
+          roughness: 0.7,
+          flatShading: true
+        });
+
+        // 4 ta bir-birini to'ldiruvchi gumbazlar (Organic Cloud Canopy)
+        const crownOffsets = [
+          { x: 0, y: trunkHeight + crownScale * 0.7, z: 0, r: crownScale * 0.9 },
+          { x: crownScale * 0.45, y: trunkHeight + crownScale * 0.5, z: crownScale * 0.3, r: crownScale * 0.7 },
+          { x: -crownScale * 0.45, y: trunkHeight + crownScale * 0.55, z: crownScale * 0.2, r: crownScale * 0.75 },
+          { x: 0, y: trunkHeight + crownScale * 0.45, z: -crownScale * 0.45, r: crownScale * 0.7 }
+        ];
+
+        crownOffsets.forEach(c => {
+          const domeGeo = new THREE.DodecahedronGeometry(c.r, 1);
+          const dome = new THREE.Mesh(domeGeo, leafMat);
+          dome.position.set(c.x, c.y, c.z);
+          dome.castShadow = true;
+          cropGroup.add(dome);
+        });
+
+        // ===== BOSQICH 2: GULLASH (APPLE BLOSSOM) 🌸 =====
+        if (stage === 2) {
+          const petalMat = new THREE.MeshStandardMaterial({
+            color: 0xfff0f5,
+            emissive: 0xf8bbd0,
+            emissiveIntensity: 0.35,
+            roughness: 0.5
+          });
+          const pistilMat = new THREE.MeshBasicMaterial({ color: 0xffeb3b });
+
+          for (let f = 0; f < 16; f++) {
+            const angle = (f / 16) * Math.PI * 2 + (f % 3) * 0.5;
+            const radius = crownScale * (0.65 + (f % 4) * 0.1);
+            const flowerY = trunkHeight + crownScale * (0.3 + (f % 5) * 0.18);
+            const fx = Math.cos(angle) * radius;
+            const fz = Math.sin(angle) * radius;
+
+            // 5 ta gulbarg
+            const flowerGroup = new THREE.Group();
+            flowerGroup.position.set(fx, flowerY, fz);
+
+            const flowerGeo = new THREE.CircleGeometry(0.09, 5);
+            const flowerMesh = new THREE.Mesh(flowerGeo, petalMat);
+            flowerMesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+            flowerGroup.add(flowerMesh);
+
+            // Sariq markazi (Pistil)
+            const pistilGeo = new THREE.SphereGeometry(0.035, 4, 4);
+            const pistilMesh = new THREE.Mesh(pistilGeo, pistilMat);
+            flowerGroup.add(pistilMesh);
+
+            cropGroup.add(flowerGroup);
+          }
+        }
+
+        // ===== BOSQICH 3: XOM MEVALAR (BLUSHING APPLES) 🍏 =====
+        if (stage === 3) {
+          const rawAppleMat = new THREE.MeshStandardMaterial({
+            color: 0x8bc34a,
+            roughness: 0.3,
+            metalness: 0.1
+          });
+          for (let i = 0; i < 8; i++) {
+            const angle = (i / 8) * Math.PI * 2 + (i % 2) * 0.4;
+            const r = crownScale * 0.8;
+            const ay = trunkHeight + crownScale * (0.35 + (i % 3) * 0.2);
+            const ax = Math.cos(angle) * r;
+            const az = Math.sin(angle) * r;
+
+            const appleGeo = new THREE.SphereGeometry(0.08, 6, 6);
+            const apple = new THREE.Mesh(appleGeo, rawAppleMat);
+            apple.position.set(ax, ay, az);
+            cropGroup.add(apple);
+          }
+        }
+
+        // ===== BOSQICH 4: PISHGAN YALTIRAG'ON QIZIL OLMALAR (RIPE RED APPLES) 🍎✨ =====
+        if (stage >= 4) {
+          const ripeAppleMat = new THREE.MeshStandardMaterial({
+            color: 0xd50000,
+            emissive: 0x5d0000,
+            emissiveIntensity: 0.2,
+            roughness: 0.15,
+            metalness: 0.2
+          });
+          const stemMat = new THREE.MeshStandardMaterial({ color: 0x3e2723 });
+
+          // Daraxtdagi 14 ta yirik qizil olmalar
+          for (let i = 0; i < 14; i++) {
+            const angle = (i / 14) * Math.PI * 2 + (i % 3) * 0.4;
+            const r = crownScale * (0.75 + (i % 3) * 0.1);
+            const ay = trunkHeight + crownScale * (0.3 + (i % 4) * 0.2);
+            const ax = Math.cos(angle) * r;
+            const az = Math.sin(angle) * r;
+
+            const appleGroup = new THREE.Group();
+            appleGroup.position.set(ax, ay, az);
+
+            const appleGeo = new THREE.SphereGeometry(0.12, 8, 8);
+            const apple = new THREE.Mesh(appleGeo, ripeAppleMat);
+            apple.castShadow = true;
+            appleGroup.add(apple);
+
+            // Olma bandi (Stem)
+            const stemGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.06, 4);
+            const stem = new THREE.Mesh(stemGeo, stemMat);
+            stem.position.y = 0.12;
+            stem.rotation.z = 0.3;
+            appleGroup.add(stem);
+
+            cropGroup.add(appleGroup);
+          }
+
+          // Daraxt tagida to'plangan olma savatchasi (Harvest Basket)
+          const basketGroup = new THREE.Group();
+          basketGroup.position.set(0.45, 0, 0.45);
+
+          const basketMat = new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.8 });
+          const basketGeo = new THREE.CylinderGeometry(0.22, 0.16, 0.22, 8, 1, true);
+          const basket = new THREE.Mesh(basketGeo, basketMat);
+          basket.position.y = 0.11;
+          basketGroup.add(basket);
+
+          // Savatdagi olmalar
+          for (let a = 0; a < 3; a++) {
+            const bAppleGeo = new THREE.SphereGeometry(0.08, 6, 6);
+            const bApple = new THREE.Mesh(bAppleGeo, ripeAppleMat);
+            const bAngle = (a / 3) * Math.PI * 2;
+            bApple.position.set(Math.cos(bAngle) * 0.08, 0.16, Math.sin(bAngle) * 0.08);
+            basketGroup.add(bApple);
+          }
+          cropGroup.add(basketGroup);
         }
       }
     } else if (cropType === 'oasis_tree') {
