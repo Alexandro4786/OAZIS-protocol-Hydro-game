@@ -393,9 +393,21 @@ export class UIManager {
     this.statEcoScore.innerText = `${Math.round(res.ecoScore)}%`;
     this.ecoProgressFill.style.width = `${Math.min(100, res.ecoScore)}%`;
 
-    // Ob-havo
-    this.statSeasonDay.innerText = `${Math.floor(res.day)}-kun • ${res.season}`;
-    this.statTempEt0.innerHTML = `${Math.round(weather.temperature)}°C <span class="et0-sub">(ET₀: ${weather.et0.toFixed(1)})</span>`;
+    // Ob-havo ko'rsatkichi
+    const weatherIcon = weather.icon || '☀️';
+    const weatherName = weather.name || 'Quyoshli';
+    const wIconEl = document.getElementById('weather-icon');
+    const wNameEl = document.getElementById('stat-weather-name');
+    if (wIconEl) wIconEl.innerText = weatherIcon;
+    if (wNameEl) wNameEl.innerText = `${weatherName} • ${Math.floor(res.day)}-kun`;
+    
+    let extraMeteo = `💨 ${weather.windSpeed || 3}m/s`;
+    if (weather.rainRate && weather.rainRate > 0) {
+      extraMeteo += ` • 🌧️ +${weather.rainRate}mm`;
+    }
+    if (this.statTempEt0) {
+      this.statTempEt0.innerHTML = `${Math.round(weather.temperature)}°C <span class="et0-sub">(ET₀: ${weather.et0.toFixed(1)} • ${extraMeteo})</span>`;
+    }
 
     // Inqiroz Bannerini yangilash
     if (crisis) {

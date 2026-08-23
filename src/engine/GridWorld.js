@@ -86,28 +86,36 @@ export class GridWorld {
           continue;
         }
 
-        // a) Bug'lanish (ET0 va haroratga bog'liq)
+        // a) Bug'lanish (ET0, shamol va haroratga bog'liq)
         let et0Factor = weather.et0 * (weather.temperature / 25) * 0.05 * dt;
+        if (weather.id === 'windy') et0Factor *= 1.4; // Quruq issiq shamol bug'lanishni oshiradi
         
         // Agar o'rmon/daraxt bo'lsa, mikroiqlim hisobiga ET0 kamayadi
-        if (tile.crop && tile.crop.type === 'oasis_tree') {
+        if (tile.crop && (tile.crop.type === 'oasis_tree' || tile.crop.type === 'orchard')) {
           et0Factor *= 0.6;
         }
 
         // Sug'orish turi bo'yicha bug'lanishni kamaytirish
         let evaporationLoss = et0Factor;
         if (tile.irrigation === 'sdi') {
-          evaporationLoss *= 0.05; // SDI da deyarli bug'lanmaydi
+          evaporationLoss *= 0.05;
         } else if (tile.irrigation === 'drip_surface') {
           evaporationLoss *= 0.4;
         } else if (tile.irrigation === 'sprinkler') {
           evaporationLoss *= 0.75;
         } else if (tile.irrigation === 'furrow') {
-          evaporationLoss *= 1.3; // Egatda quyoshda suv ko'l bo'lib tez bug'lanadi
+          evaporationLoss *= 1.3;
         }
 
-        // b) Namlikning tabiiy pasayishi
-        tile.moisture = Math.max(5, tile.moisture - evaporationLoss);
+        // b) Tabiiy yog'ingarchilik yoki bug'lanish
+        if (weather.rainRate && weather.rainRate > 0) {
+          // Tabiiy yomg'ir dalalarni bepul namlaydi
+          const rainGain = (weather.moistureGainRate || 2.5) * dt;
+          tile.moisture = Math.min(95, tile.moisture + rainGain);
+        } else {
+          // Quruq havoda tabiiy namlik pasayishi
+          tile.moisture = Math.max(5, tile.moisture - evaporationLoss);
+        }
 
         // c) Sug'orish oqimi (Quvur yoki nasos ulangan bo'lsa kafolatlangan suv berish)
         tile.waterLossRate = 0;

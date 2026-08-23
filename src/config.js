@@ -21,6 +21,88 @@ export const INITIAL_RESOURCES = {
   harvestCountTotal: 0
 };
 
+// Professional Meteorologik Ob-Havo Turlari
+export const WEATHER_PRESETS = {
+  sunny: {
+    id: 'sunny',
+    name: "Quyoshli va Ochiq Havo",
+    icon: '☀️',
+    color: '#ffb300',
+    tempMod: 0,
+    et0Mod: 1.0,
+    windSpeed: 3,
+    rainRate: 0,
+    cloudCover: 0.1,
+    skyColor: '#101826',
+    fogColor: '#101826',
+    sunIntensity: 1.4,
+    description: "Iliq va ochiq havo. Evapotranspiratsiya me'yorida."
+  },
+  cloudy: {
+    id: 'cloudy',
+    name: "Bulutli Havo",
+    icon: '☁️',
+    color: '#90a4ae',
+    tempMod: -4,
+    et0Mod: 0.65,
+    windSpeed: 6,
+    rainRate: 0,
+    cloudCover: 0.85,
+    skyColor: '#1e293b',
+    fogColor: '#1e293b',
+    sunIntensity: 0.9,
+    description: "Qalin bulutlar quyosh nurini to'smoqda. Bug'lanish kamaydi."
+  },
+  rain: {
+    id: 'rain',
+    name: "Mayin Yomg'ir",
+    icon: '🌧️',
+    color: '#4fc3f7',
+    tempMod: -7,
+    et0Mod: 0.35,
+    windSpeed: 8,
+    rainRate: 12,
+    cloudCover: 1.0,
+    skyColor: '#0f172a',
+    fogColor: '#0f172a',
+    sunIntensity: 0.6,
+    moistureGainRate: 2.8,
+    description: "Foydali yomg'ir yog'moqda! Barcha ekinlar tabiiy namlik bilan to'yinmoqda."
+  },
+  windy: {
+    id: 'windy',
+    name: "Kuchli Shamol & Garmsel",
+    icon: '💨',
+    color: '#ffb74d',
+    tempMod: +5,
+    et0Mod: 1.85,
+    windSpeed: 18,
+    rainRate: 0,
+    cloudCover: 0.25,
+    skyColor: '#261b14',
+    fogColor: '#261b14',
+    sunIntensity: 1.3,
+    description: "Quruq va issiq garmsel shamoli esmoqda. Tuproq namligi tez bug'lanmoqda!"
+  },
+  storm_flood: {
+    id: 'storm_flood',
+    name: "Kuchli Sel & Jala (Momaqaldiroq)",
+    icon: '⛈️',
+    color: '#7c4dff',
+    tempMod: -9,
+    et0Mod: 0.2,
+    windSpeed: 24,
+    rainRate: 45,
+    cloudCover: 1.0,
+    skyColor: '#0a0e17',
+    fogColor: '#0a0e17',
+    sunIntensity: 0.35,
+    moistureGainRate: 7.5,
+    riverSurgeRate: 60,
+    description: "XAVFLI METEO: Kuchli sel va jala! Daryo toshishi mumkin, rezervuarlar suv bilan to'lmoqda."
+  }
+};
+
 // Sug'orish Texnologiyalari (4 ta Bosqich)
 export const IRRIGATION_TECH = {
   furrow: {

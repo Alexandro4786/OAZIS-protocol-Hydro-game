@@ -13,7 +13,7 @@ import { TechTreeModal } from './ui/TechTreeModal.js';
 import { ScadaModal } from './ui/ScadaModal.js';
 import { UIManager } from './ui/UIManager.js';
 import { TutorialGuide } from './ui/TutorialGuide.js';
-import { CROP_TYPES, IRRIGATION_TECH, BUILDINGS } from './config.js';
+import { CROP_TYPES, IRRIGATION_TECH, BUILDINGS, WEATHER_PRESETS } from './config.js';
 
 class OasisGame {
   constructor() {
@@ -39,10 +39,19 @@ class OasisGame {
     this.uiManager = new UIManager(this.gameState, this.gridWorld, this.audioManager, this.crisisManager);
     this.tutorialGuide = new TutorialGuide(this.audioManager, this.gameState);
 
-    // Ob-havo
+    // 4. Meteorologik Ob-havo
+    this.weatherPreset = WEATHER_PRESETS.sunny;
+    this.weatherTimer = 45;
     this.weather = {
+      id: this.weatherPreset.id,
+      name: this.weatherPreset.name,
+      icon: this.weatherPreset.icon,
       temperature: 28,
-      et0: 4.5
+      et0: 4.5,
+      windSpeed: 3,
+      rainRate: 0,
+      cloudCover: 0.1,
+      moistureGainRate: 0
     };
 
     this.lastTime = performance.now();
@@ -317,12 +326,34 @@ class OasisGame {
     res.timeOfDay = (res.timeOfDay + gameDt * 0.4) % 24;
     res.day += gameDt * 0.016;
 
-    // Ob-havo dinamikasi
+    // 1. Dinamik Meteorologik Ob-Havo Tsikli (Weather Cycle)
+    this.weatherTimer -= gameDt;
+    if (this.weatherTimer <= 0) {
+      const keys = ['sunny', 'sunny', 'cloudy', 'rain', 'windy', 'storm_flood'];
+      const nextKey = keys[Math.floor(Math.random() * keys.length)];
+      this.weatherPreset = WEATHER_PRESETS[nextKey] || WEATHER_PRESETS.sunny;
+      this.weatherTimer = 45 + Math.random() * 45; // 45-90 soniya
+
+      this.gameState.emit('weatherChanged', this.weatherPreset);
+      this.gameState.emit('notify', {
+        type: 'info',
+        message: `${this.weatherPreset.icon} Ob-havo o'zgardi: ${this.weatherPreset.name}! ${this.weatherPreset.description}`
+      });
+
+      if (this.weatherPreset.id === 'windy') {
+        this.audioManager.playWindGust();
+      } else if (this.weatherPreset.id === 'storm_flood') {
+        this.audioManager.playThunder();
+      }
+    }
+
+    // 2. Ob-havo ko'rsatkichlarini hisoblash
     const hour = res.timeOfDay;
     let baseTemp = 24 + Math.sin(((hour - 6) / 12) * Math.PI) * 10;
     if (hour < 6 || hour > 20) baseTemp = 18;
+    baseTemp += this.weatherPreset.tempMod;
 
-    let baseEt0 = 3.5 + (baseTemp / 30) * 2.0;
+    let baseEt0 = (3.5 + (baseTemp / 30) * 2.0) * this.weatherPreset.et0Mod;
 
     // Inqiroz ta'siri
     if (this.crisisManager.activeCrisis) {
@@ -332,6 +363,18 @@ class OasisGame {
       }
     }
 
+    // Sel va Jala paytida daryo sathi to'lib, zaxira ko'payadi
+    if (this.weatherPreset.id === 'storm_flood') {
+      res.surfaceWater = Math.min(10000, res.surfaceWater + (this.weatherPreset.riverSurgeRate || 60) * gameDt);
+    }
+
+    this.weather.id = this.weatherPreset.id;
+    this.weather.name = this.weatherPreset.name;
+    this.weather.icon = this.weatherPreset.icon;
+    this.weather.windSpeed = this.weatherPreset.windSpeed;
+    this.weather.rainRate = this.weatherPreset.rainRate;
+    this.weather.cloudCover = this.weatherPreset.cloudCover;
+    this.weather.moistureGainRate = this.weatherPreset.moistureGainRate;
     this.weather.temperature = baseTemp;
     this.weather.et0 = baseEt0;
     res.temperature = baseTemp;
@@ -371,10 +414,22 @@ class OasisGame {
     this.updateSimulation(dt);
 
     // 2. 3D Render
-    this.sceneManager.updateLighting(this.gameState.resources.timeOfDay, this.crisisManager.activeCrisis);
+    this.sceneManager.updateLighting(
+      this.gameState.resources.timeOfDay,
+      this.crisisManager.activeCrisis,
+      this.weatherPreset,
+      dt,
+      this.audioManager
+    );
     this.tileRenderer.update(currentTime * 0.001, this.gameState.activeHeatmap);
-    this.buildingRenderer.update(currentTime * 0.001, dt);
-    this.particleSystem.update(currentTime * 0.001, dt, this.gameState.resources.ecoScore, this.crisisManager.activeCrisis);
+    this.buildingRenderer.update(currentTime * 0.001, dt, this.weatherPreset);
+    this.particleSystem.update(
+      currentTime * 0.001,
+      dt,
+      this.gameState.resources.ecoScore,
+      this.crisisManager.activeCrisis,
+      this.weatherPreset
+    );
     this.terraformer.update(this.gameState.resources.ecoScore);
     this.sceneManager.render();
 

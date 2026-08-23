@@ -37,6 +37,16 @@ export class SceneManager {
     // 4. Lights
     this.initLights();
 
+    // 4.1. Volumetric 3D Drifting Clouds (Bulutlar)
+    this.cloudsGroup = new THREE.Group();
+    this.scene.add(this.cloudsGroup);
+    this.initClouds();
+
+    // Lightning Flash holati
+    this.nextLightningTime = 5;
+    this.isLightning = false;
+    this.lightningTimer = 0;
+
     // 5. Interaction / Raycaster
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2(-999, -999);
@@ -297,31 +307,138 @@ export class SceneManager {
     }
   }
 
-  updateLighting(timeOfDay, crisis) {
-    // Kun vaqti (0..24 soat)
+  initClouds() {
+    this.clouds = [];
+    const mapSize = GRID_SIZE * TILE_SIZE;
+    const cloudMat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.9,
+      flatShading: true,
+      transparent: true,
+      opacity: 0.85
+    });
+
+    for (let i = 0; i < 10; i++) {
+      const cloudGroup = new THREE.Group();
+      const puffsCount = 4 + Math.floor(Math.random() * 3);
+      for (let p = 0; p < puffsCount; p++) {
+        const radius = 1.4 + Math.random() * 1.2;
+        const puffGeo = new THREE.DodecahedronGeometry(radius, 1);
+        const puffMesh = new THREE.Mesh(puffGeo, cloudMat);
+        puffMesh.position.set(
+          (p - puffsCount / 2) * 1.5 + (Math.random() - 0.5) * 0.8,
+          (Math.random() - 0.5) * 0.6,
+          (Math.random() - 0.5) * 1.2
+        );
+        puffMesh.castShadow = true;
+        cloudGroup.add(puffMesh);
+      }
+
+      cloudGroup.position.set(
+        Math.random() * mapSize * 1.6 - mapSize * 0.3,
+        18 + Math.random() * 6,
+        Math.random() * mapSize * 1.6 - mapSize * 0.3
+      );
+      cloudGroup.userData = {
+        speed: 1.2 + Math.random() * 1.0,
+        driftY: cloudGroup.position.y
+      };
+
+      this.cloudsGroup.add(cloudGroup);
+      this.clouds.push(cloudGroup);
+    }
+  }
+
+  updateLighting(timeOfDay, crisis, weather = {}, dt = 0.016, audioManager = null) {
+    const mapSize = GRID_SIZE * TILE_SIZE;
     const hour = timeOfDay % 24;
     const sunAngle = (hour / 24) * Math.PI * 2 - Math.PI / 2;
     
-    const sunX = Math.cos(sunAngle) * 45 + (GRID_SIZE * TILE_SIZE) / 2;
+    const sunX = Math.cos(sunAngle) * 45 + mapSize / 2;
     const sunY = Math.max(2, Math.sin(sunAngle) * 50);
-    const sunZ = Math.sin(sunAngle) * 35 + (GRID_SIZE * TILE_SIZE) / 2;
-    
+    const sunZ = Math.sin(sunAngle) * 35 + mapSize / 2;
     this.dirLight.position.set(sunX, sunY, sunZ);
-    
-    // Kechqurun yoki kunduzgi ranglar
-    if (crisis && crisis.id === 'heatwave') {
-      this.scene.background.set('#2a1205');
-      this.dirLight.color.set('#ff7043');
-      this.ambientLight.color.set('#ffab91');
-    } else if (hour >= 6 && hour <= 19) { // Kunduzi
-      this.scene.background.set('#121e33');
-      this.dirLight.color.set('#fff3e0');
-      this.ambientLight.color.set('#d4e4ff');
-    } else { // Kechasi
-      this.scene.background.set('#070b12');
-      this.dirLight.color.set('#3949ab');
-      this.ambientLight.color.set('#1a237e');
+
+    // 1. Bulutlar harakati (Drifting Volumetric Clouds)
+    const cloudCover = weather.cloudCover !== undefined ? weather.cloudCover : 0.2;
+    const windSpeed = weather.windSpeed || 5;
+    this.cloudsGroup.visible = cloudCover > 0.05;
+
+    if (this.cloudsGroup.visible) {
+      this.clouds.forEach((cloud, idx) => {
+        cloud.position.x += windSpeed * 0.15 * cloud.userData.speed * dt;
+        cloud.position.y = cloud.userData.driftY + Math.sin(Date.now() * 0.001 + idx) * 0.2;
+        if (cloud.position.x > mapSize * 1.4) {
+          cloud.position.x = -mapSize * 0.4;
+          cloud.position.z = Math.random() * mapSize * 1.4 - mapSize * 0.2;
+        }
+        const scale = Math.min(1.4, 0.4 + cloudCover * 1.0);
+        cloud.scale.set(scale, scale, scale);
+      });
     }
+
+    // 2. Chaqmoq va Momaqaldiroq (Storm Lightning)
+    if (weather.id === 'storm_flood') {
+      this.nextLightningTime -= dt;
+      if (this.nextLightningTime <= 0) {
+        this.isLightning = true;
+        this.lightningTimer = 0.18;
+        this.nextLightningTime = 3.5 + Math.random() * 5.0;
+        if (audioManager) audioManager.playThunder();
+      }
+    }
+
+    if (this.isLightning) {
+      this.lightningTimer -= dt;
+      this.dirLight.intensity = 3.8;
+      this.dirLight.color.set('#e0f7fa');
+      this.ambientLight.intensity = 1.2;
+      this.scene.background.set('#1a233a');
+      if (this.lightningTimer <= 0) {
+        this.isLightning = false;
+      }
+      return;
+    }
+
+    // 3. Meteorologik va Kun/Tun Yoritishi
+    const isDay = hour >= 6 && hour <= 19;
+    let baseSunIntensity = weather.sunIntensity !== undefined ? weather.sunIntensity : 1.3;
+    let skyHex = weather.skyColor || '#121e33';
+    let dirColorHex = '#fff3e0';
+    let ambientHex = '#d4e4ff';
+
+    if (crisis && crisis.id === 'heatwave') {
+      skyHex = '#2a1205';
+      dirColorHex = '#ff7043';
+      ambientHex = '#ffab91';
+      baseSunIntensity = 1.6;
+    } else if (!isDay) {
+      skyHex = '#070b12';
+      dirColorHex = '#3949ab';
+      ambientHex = '#1a237e';
+      baseSunIntensity = 0.15;
+    } else if (weather.id === 'rain') {
+      skyHex = '#0f172a';
+      dirColorHex = '#90caf9';
+      ambientHex = '#546e7a';
+    } else if (weather.id === 'storm_flood') {
+      skyHex = '#080c14';
+      dirColorHex = '#5c6bc0';
+      ambientHex = '#37474f';
+    } else if (weather.id === 'windy') {
+      skyHex = '#261b14';
+      dirColorHex = '#ffe082';
+      ambientHex = '#bcaaa4';
+    }
+
+    this.scene.background.set(skyHex);
+    if (this.scene.fog) {
+      this.scene.fog.color.set(skyHex);
+      this.scene.fog.density = weather.id === 'storm_flood' ? 0.025 : (weather.id === 'windy' ? 0.02 : 0.015);
+    }
+    this.dirLight.color.set(dirColorHex);
+    this.dirLight.intensity = baseSunIntensity;
+    this.ambientLight.color.set(ambientHex);
   }
 
   onResize() {

@@ -29,7 +29,59 @@ export class ParticleSystem {
     this.sprayPoints = new THREE.Points(this.sprayGeo, this.sprayMat);
     this.scene.add(this.sprayPoints);
 
-    // 2. Qushlar (Oazis ko'tarilganda paydo bo'ladi)
+    // 2. Yomg'ir tizimi (Rain Particles)
+    this.rainCount = 800;
+    this.rainGeo = new THREE.BufferGeometry();
+    this.rainPositions = new Float32Array(this.rainCount * 3);
+    this.rainVelocities = [];
+
+    const mapWidth = GRID_SIZE * TILE_SIZE;
+    for (let i = 0; i < this.rainCount; i++) {
+      this.rainPositions[i * 3 + 0] = (Math.random() - 0.2) * mapWidth * 1.4;
+      this.rainPositions[i * 3 + 1] = Math.random() * 25 + 5;
+      this.rainPositions[i * 3 + 2] = (Math.random() - 0.2) * mapWidth * 1.4;
+      this.rainVelocities.push({
+        y: 18 + Math.random() * 10,
+        x: 2 + Math.random() * 2
+      });
+    }
+
+    this.rainGeo.setAttribute('position', new THREE.BufferAttribute(this.rainPositions, 3));
+    this.rainMat = new THREE.PointsMaterial({
+      color: 0x81d4fa,
+      size: 0.22,
+      transparent: true,
+      opacity: 0.75
+    });
+    this.rainPoints = new THREE.Points(this.rainGeo, this.rainMat);
+    this.rainPoints.visible = false;
+    this.scene.add(this.rainPoints);
+
+    // 3. Shamol va Qum/To'zon zarrachalari (Wind Dust Storm)
+    this.dustCount = 250;
+    this.dustGeo = new THREE.BufferGeometry();
+    this.dustPositions = new Float32Array(this.dustCount * 3);
+    this.dustSpeeds = [];
+
+    for (let i = 0; i < this.dustCount; i++) {
+      this.dustPositions[i * 3 + 0] = Math.random() * mapWidth * 1.5 - mapWidth * 0.25;
+      this.dustPositions[i * 3 + 1] = Math.random() * 4 + 0.3;
+      this.dustPositions[i * 3 + 2] = Math.random() * mapWidth * 1.5 - mapWidth * 0.25;
+      this.dustSpeeds.push(12 + Math.random() * 10);
+    }
+
+    this.dustGeo.setAttribute('position', new THREE.BufferAttribute(this.dustPositions, 3));
+    this.dustMat = new THREE.PointsMaterial({
+      color: 0xd7ccc8,
+      size: 0.28,
+      transparent: true,
+      opacity: 0.5
+    });
+    this.dustPoints = new THREE.Points(this.dustGeo, this.dustMat);
+    this.dustPoints.visible = false;
+    this.scene.add(this.dustPoints);
+
+    // 4. Qushlar (Oazis ko'tarilganda paydo bo'ladi)
     this.birdsGroup = new THREE.Group();
     this.scene.add(this.birdsGroup);
     this.initBirds();
@@ -67,11 +119,11 @@ export class ParticleSystem {
     }
   }
 
-  update(time, dt, ecoScore, crisis) {
-    // 1. Sprinkler va truba yorilishidan suv sachrashi
-    let pIdx = 0;
-    const activeSources = [];
+  update(time, dt, ecoScore, crisis, weather = {}) {
+    const mapWidth = GRID_SIZE * TILE_SIZE;
 
+    // 1. Sprinkler va truba yorilishidan suv sachrashi
+    const activeSources = [];
     for (let x = 0; x < this.gridWorld.size; x++) {
       for (let y = 0; y < this.gridWorld.size; y++) {
         const tile = this.gridWorld.tiles[x][y];
@@ -86,7 +138,6 @@ export class ParticleSystem {
       }
     }
 
-    // Inqiroz: truba yorilishi favvorasi
     if (crisis && crisis.id === 'pipe_burst') {
       activeSources.push({
         x: (GRID_SIZE * TILE_SIZE) / 2,
@@ -112,7 +163,6 @@ export class ParticleSystem {
             (Math.random() - 0.5) * spread
           );
         } else {
-          // Harakat va gravitatsiya
           this.sprayVelocities[i].y -= 9.8 * dt * 0.5;
           this.sprayPositions[i * 3 + 0] += this.sprayVelocities[i].x * dt;
           this.sprayPositions[i * 3 + 1] += this.sprayVelocities[i].y * dt;
@@ -127,8 +177,48 @@ export class ParticleSystem {
       this.sprayGeo.attributes.position.needsUpdate = true;
     }
 
-    // 2. Qushlar parvozi (Eko-Ball > 30 bo'lsa)
-    const showBirds = ecoScore >= 30;
+    // 2. Yomg'ir simulyatsiyasi (Rain Particles)
+    const isRaining = (weather.rainRate && weather.rainRate > 0) || weather.id === 'rain' || weather.id === 'storm_flood';
+    this.rainPoints.visible = !!isRaining;
+    if (isRaining) {
+      const windFactor = (weather.windSpeed || 5) * 0.2;
+      const speedMult = weather.id === 'storm_flood' ? 1.5 : 1.0;
+      for (let i = 0; i < this.rainCount; i++) {
+        this.rainPositions[i * 3 + 1] -= this.rainVelocities[i].y * dt * speedMult;
+        this.rainPositions[i * 3 + 0] += windFactor * dt * 4.0;
+        this.rainPositions[i * 3 + 2] += windFactor * dt * 1.5;
+
+        // Erga tushganda tepadan qayta yog'adi
+        if (this.rainPositions[i * 3 + 1] <= 0) {
+          this.rainPositions[i * 3 + 1] = 20 + Math.random() * 8;
+          this.rainPositions[i * 3 + 0] = (Math.random() - 0.3) * mapWidth * 1.4;
+          this.rainPositions[i * 3 + 2] = (Math.random() - 0.3) * mapWidth * 1.4;
+        }
+      }
+      this.rainGeo.attributes.position.needsUpdate = true;
+    }
+
+    // 3. Kuchli Shamol va Chang to'zon (Dust Storm Particles)
+    const isWindy = (weather.windSpeed && weather.windSpeed > 12) || weather.id === 'windy' || (crisis && crisis.id === 'heatwave');
+    this.dustPoints.visible = !!isWindy;
+    if (isWindy) {
+      const windSpeed = (weather.windSpeed || 15);
+      for (let i = 0; i < this.dustCount; i++) {
+        this.dustPositions[i * 3 + 0] += this.dustSpeeds[i] * (windSpeed / 15) * dt;
+        this.dustPositions[i * 3 + 1] += Math.sin(time * 2 + i) * dt * 0.8;
+        this.dustPositions[i * 3 + 2] += (Math.random() - 0.5) * dt * 2.0;
+
+        if (this.dustPositions[i * 3 + 0] > mapWidth * 1.3) {
+          this.dustPositions[i * 3 + 0] = -mapWidth * 0.25;
+          this.dustPositions[i * 3 + 1] = Math.random() * 4 + 0.3;
+          this.dustPositions[i * 3 + 2] = Math.random() * mapWidth * 1.4 - mapWidth * 0.2;
+        }
+      }
+      this.dustGeo.attributes.position.needsUpdate = true;
+    }
+
+    // 4. Qushlar parvozi (Eko-Ball > 30 va yog'ingarchilik/to'fon bo'lmasa)
+    const showBirds = ecoScore >= 30 && !isRaining && weather.id !== 'storm_flood';
     this.birdsGroup.visible = showBirds;
     if (showBirds) {
       this.birds.forEach((bird) => {

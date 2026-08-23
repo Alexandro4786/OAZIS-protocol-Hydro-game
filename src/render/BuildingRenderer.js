@@ -56,7 +56,7 @@ export class BuildingRenderer {
     this.sprinklerMat = new THREE.MeshStandardMaterial({ color: 0x0288d1, metalness: 0.7, roughness: 0.3 });
   }
 
-  update(time, dt) {
+  update(time, dt, weather = {}) {
     // 1. Quvurlardagi suv oqimi pulsatsiyasi
     const pulse = 0.6 + Math.sin(time * 5.0) * 0.35;
     this.activePipeMat.emissiveIntensity = pulse;
@@ -71,11 +71,14 @@ export class BuildingRenderer {
       }
     });
 
-    // 3. Ekinlar tebranishi (shabboda)
+    // 3. Ekinlar va daraxtlarning shamolda dinamik tebranishi
+    const windSpeed = weather.windSpeed || 4;
+    const windFreq = 1.5 + windSpeed * 0.25;
+    const windAngle = 0.03 + Math.min(0.2, windSpeed * 0.008);
+
     this.cropMeshes.forEach((mesh) => {
-      if (mesh.sway) {
-        mesh.rotation.z = Math.sin(time * 2.5 + mesh.position.x) * 0.06;
-      }
+      mesh.rotation.z = Math.sin(time * windFreq + mesh.position.x * 0.8) * windAngle;
+      mesh.rotation.x = Math.cos(time * (windFreq * 0.8) + mesh.position.z * 0.8) * (windAngle * 0.5);
     });
   }
 
