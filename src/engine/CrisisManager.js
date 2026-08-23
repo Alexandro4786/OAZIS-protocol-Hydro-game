@@ -10,14 +10,21 @@ export class CrisisManager {
   }
 
   update(dt, weather = {}) {
+    const seasonId = this.gameState.resources.seasonId || 'spring';
+    const isCoolOrWet = weather.rainRate > 0 || 
+                        weather.id === 'rain' || 
+                        weather.id === 'storm_flood' || 
+                        weather.id === 'fresh_cloudy' || 
+                        weather.id === 'cloudy' || 
+                        weather.id === 'humid_sun';
+
     if (this.activeCrisis) {
-      // 1. Agar yomg'ir yoki sel boshlansa, issiqlik to'lqini va qurg'oqchilik avtomatik tugaydi!
-      if ((weather.rainRate > 0 || weather.id === 'rain' || weather.id === 'storm_flood') && 
-          (this.activeCrisis.id === 'heatwave' || this.activeCrisis.id === 'drought')) {
+      // 1. Agar salqin, bulutli yoki yomg'irli ob-havo bo'lsa yoki Yoz fasli bo'lmasa, jazirama/qurg'oqchilik darhol bekor qilinadi!
+      if ((this.activeCrisis.id === 'heatwave' || this.activeCrisis.id === 'drought') && (isCoolOrWet || seasonId !== 'summer')) {
         this.resolveCrisis();
         this.gameState.emit('notify', {
           type: 'success',
-          message: "🌧️ Yomg'ir va sel tufayli qurg'oqchilik/jazirama inqirozi barham topdi!"
+          message: "🌤️ Salqin va nam havo tufayli jazirama/qurg'oqchilik xavfi to'liq bartaraf etildi!"
         });
         return;
       }
@@ -37,20 +44,34 @@ export class CrisisManager {
     } else {
       this.timerToNextCrisis -= dt;
       if (this.timerToNextCrisis <= 0) {
-        this.triggerRandomCrisis(weather);
+        this.triggerRandomCrisis(weather, seasonId);
       }
     }
   }
 
-  triggerRandomCrisis(weather = {}) {
+  triggerRandomCrisis(weather = {}, seasonId = 'spring') {
     let availableKeys = Object.keys(CRISIS_TYPES);
+    const isCoolOrWet = weather.rainRate > 0 || 
+                        weather.id === 'rain' || 
+                        weather.id === 'storm_flood' || 
+                        weather.id === 'fresh_cloudy' || 
+                        weather.id === 'cloudy' || 
+                        weather.id === 'humid_sun';
 
-    // Yomg'ir yoki sel paytida qurg'oqchilik (drought) va jazirama (heatwave) bo'lishi MUMKIN EMAS!
-    if (weather.rainRate > 0 || weather.id === 'rain' || weather.id === 'storm_flood') {
-      availableKeys = availableKeys.filter(k => k !== 'heatwave' && k !== 'drought');
+    // 1. Jazirama (Heatwave) FAQATGINA Yoz faslida va ochiq quyoshli/garmsel ob-havosida bo'lishi mumkin!
+    if (seasonId !== 'summer' || isCoolOrWet || (weather.id !== 'sunny' && weather.id !== 'windy')) {
+      availableKeys = availableKeys.filter(k => k !== 'heatwave');
     }
 
-    if (availableKeys.length === 0) return;
+    // 2. Qurg'oqchilik (Drought) salqin, bulutli yoki yomg'irli paytda bo'lishi MUMKIN EMAS!
+    if (isCoolOrWet || seasonId === 'winter') {
+      availableKeys = availableKeys.filter(k => k !== 'drought');
+    }
+
+    if (availableKeys.length === 0) {
+      this.timerToNextCrisis = 45; // Mos inqiroz bo'lmasa keyinroqqa qoldirish
+      return;
+    }
 
     const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
     const crisis = CRISIS_TYPES[randomKey];
