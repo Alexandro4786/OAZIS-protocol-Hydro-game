@@ -272,11 +272,17 @@ export class GridWorld {
         
         if (tile.type === 'river') {
           tile.isConnectedToWater = true;
-          sources.push(tile); // Daryoning barcha kataklari suv manbai hisoblanadi
-        }
-        if (tile.building === 'canal_intake' || tile.building === 'deep_well') {
+          tile.sourceType = 'surface';
           sources.push(tile);
+        }
+        if (tile.building === 'canal_intake') {
+          tile.sourceType = 'surface';
           tile.isConnectedToWater = true;
+          sources.push(tile);
+        } else if (tile.building === 'well' || tile.building === 'windmill_pump' || tile.building === 'deep_well') {
+          tile.sourceType = 'aquifer';
+          tile.isConnectedToWater = true;
+          sources.push(tile);
         }
         if (tile.building === 'iot_tower') {
           iotTowers.push(tile);

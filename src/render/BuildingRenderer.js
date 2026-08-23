@@ -71,6 +71,13 @@ export class BuildingRenderer {
       }
     });
 
+    // 2.1. Shamol quduq nasosi parraklari aylanishi
+    this.buildingMeshes.forEach((meshObj) => {
+      if (meshObj.type === 'windmill_pump' && meshObj.group.userData.rotor) {
+        meshObj.group.userData.rotor.rotation.z += (weather.windSpeed || 5) * 0.35 * dt;
+      }
+    });
+
     // 3. Ekinlar va daraxtlarning shamolda dinamik tebranishi
     const windSpeed = weather.windSpeed || 4;
     const windFreq = 1.5 + windSpeed * 0.25;
@@ -161,21 +168,122 @@ export class BuildingRenderer {
       const beacon = new THREE.Mesh(beaconGeo, this.pumpBeaconMat);
       beacon.position.set(0, 1.5, 0);
       group.add(beacon);
-    } else if (tile.building === 'deep_well') {
-      // Arteziyan quduq vishkasi
-      const towerGeo = new THREE.CylinderGeometry(0.2, 0.7, 2.2, 4);
-      const towerMat = new THREE.MeshStandardMaterial({ color: 0x263238, wireframe: true });
+    } else if (tile.building === 'well') {
+      // ===== 1. ODDIY YER OSTI QUDUQ =====
+      // Tosh devorli quduq xalqasi
+      const wellGeo = new THREE.CylinderGeometry(0.55, 0.6, 0.5, 12, 1, true);
+      const wellMat = new THREE.MeshStandardMaterial({ color: 0x78909c, roughness: 0.85 });
+      const wellMesh = new THREE.Mesh(wellGeo, wellMat);
+      wellMesh.position.y = 0.25;
+      wellMesh.castShadow = true;
+      group.add(wellMesh);
+
+      // Quduq ichidagi suv oynasi (Aqua surface)
+      const waterGeo = new THREE.CircleGeometry(0.5, 12);
+      const waterMat = new THREE.MeshStandardMaterial({ color: 0x00e5ff, roughness: 0.1, metalness: 0.8 });
+      const waterMesh = new THREE.Mesh(waterGeo, waterMat);
+      waterMesh.rotation.x = -Math.PI / 2;
+      waterMesh.position.y = 0.22;
+      group.add(waterMesh);
+
+      // 2 ta yog'och ustun
+      const postMat = new THREE.MeshStandardMaterial({ color: 0x5d4037, roughness: 0.8 });
+      [-0.45, 0.45].forEach(px => {
+        const postGeo = new THREE.CylinderGeometry(0.04, 0.05, 1.2, 5);
+        const post = new THREE.Mesh(postGeo, postMat);
+        post.position.set(px, 0.7, 0);
+        group.add(post);
+      });
+
+      // Yog'och shingilli tomi
+      const roofGeo = new THREE.ConeGeometry(0.75, 0.45, 4);
+      const roofMat = new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.7 });
+      const roof = new THREE.Mesh(roofGeo, roofMat);
+      roof.rotation.y = Math.PI / 4;
+      roof.position.y = 1.45;
+      group.add(roof);
+
+      // Chelak (Bucket)
+      const bucketGeo = new THREE.CylinderGeometry(0.12, 0.09, 0.16, 6);
+      const bucketMat = new THREE.MeshStandardMaterial({ color: 0x4e342e });
+      const bucket = new THREE.Mesh(bucketGeo, bucketMat);
+      bucket.position.set(0, 0.45, 0);
+      group.add(bucket);
+    } else if (tile.building === 'windmill_pump') {
+      // ===== 2. SHAMOL TURBINALI QUDUQ NASOSI =====
+      // Beton poydevor
+      const baseGeo = new THREE.CylinderGeometry(0.65, 0.75, 0.25, 8);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x607d8b, roughness: 0.8 });
+      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+      baseMesh.position.y = 0.12;
+      group.add(baseMesh);
+
+      // Metall ferma minora (Lattice Tower)
+      const towerGeo = new THREE.CylinderGeometry(0.18, 0.55, 2.6, 4);
+      const towerMat = new THREE.MeshStandardMaterial({ color: 0xcfcfcf, wireframe: true });
       const tower = new THREE.Mesh(towerGeo, towerMat);
-      tower.position.y = 1.1;
+      tower.position.y = 1.4;
       group.add(tower);
 
-      // VFD elektr dvigateli
-      const motorGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.7, 12);
-      const motorMat = new THREE.MeshStandardMaterial({ color: 0x0277bd, metalness: 0.7 });
+      // Shamol turbinasi rotori (Aylanuvchi parraklar)
+      const rotorGroup = new THREE.Group();
+      rotorGroup.position.set(0, 2.7, 0.1);
+
+      const hubGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.15, 8);
+      const hubMat = new THREE.MeshStandardMaterial({ color: 0x37474f, metalness: 0.8 });
+      const hub = new THREE.Mesh(hubGeo, hubMat);
+      hub.rotation.x = Math.PI / 2;
+      rotorGroup.add(hub);
+
+      // 6 ta aerodinamik parrak
+      const bladeMat = new THREE.MeshStandardMaterial({ color: 0xe0e0e0, metalness: 0.7, roughness: 0.3 });
+      for (let i = 0; i < 6; i++) {
+        const bladeGeo = new THREE.BoxGeometry(0.1, 0.75, 0.02);
+        const blade = new THREE.Mesh(bladeGeo, bladeMat);
+        const angle = (i / 6) * Math.PI * 2;
+        blade.position.set(Math.cos(angle) * 0.42, Math.sin(angle) * 0.42, 0);
+        blade.rotation.z = angle;
+        rotorGroup.add(blade);
+      }
+      group.add(rotorGroup);
+      group.userData.rotor = rotorGroup; // Animatsiya uchun
+    } else if (tile.building === 'deep_well') {
+      // ===== 3. ELEKTR VFD CHUQUR NASOS STANSIYASI =====
+      // Beton poydevor
+      const baseGeo = new THREE.BoxGeometry(1.4, 0.25, 1.4);
+      const baseMat = new THREE.MeshStandardMaterial({ color: 0x455a64, roughness: 0.8 });
+      const base = new THREE.Mesh(baseGeo, baseMat);
+      base.position.y = 0.12;
+      group.add(base);
+
+      // Elektr boshqaruv shkafi (VFD Controller)
+      const cabinetGeo = new THREE.BoxGeometry(0.4, 0.9, 0.3);
+      const cabinetMat = new THREE.MeshStandardMaterial({ color: 0x263238, metalness: 0.7 });
+      const cabinet = new THREE.Mesh(cabinetGeo, cabinetMat);
+      cabinet.position.set(-0.35, 0.65, 0);
+      group.add(cabinet);
+
+      // Yuqori bosimli ko'k nasos motori
+      const motorGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.8, 12);
+      const motorMat = new THREE.MeshStandardMaterial({ color: 0x0277bd, metalness: 0.8, roughness: 0.2 });
       const motor = new THREE.Mesh(motorGeo, motorMat);
-      motor.position.y = 0.35;
+      motor.position.set(0.3, 0.6, 0);
       motor.castShadow = true;
       group.add(motor);
+
+      // Chiqish gidravlik manifolti
+      const outPipeGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.8, 8);
+      const outPipe = new THREE.Mesh(outPipeGeo, this.activePipeMat);
+      outPipe.rotation.z = Math.PI / 2;
+      outPipe.position.set(0.65, 0.4, 0);
+      group.add(outPipe);
+
+      // LED Quvvat indikatori
+      const ledGeo = new THREE.SphereGeometry(0.08, 6, 6);
+      const ledMat = new THREE.MeshStandardMaterial({ color: 0x00e676, emissive: 0x00e676, emissiveIntensity: 1.0 });
+      const led = new THREE.Mesh(ledGeo, ledMat);
+      led.position.set(-0.35, 1.15, 0.12);
+      group.add(led);
     } else if (tile.building === 'iot_tower') {
       // SCADA aloqa minorasi
       const mastGeo = new THREE.CylinderGeometry(0.06, 0.15, 3.2, 6);

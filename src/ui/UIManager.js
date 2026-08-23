@@ -334,7 +334,7 @@ export class UIManager {
         icon: b.icon,
         cost: b.cost,
         desc: b.description,
-        unlocked: b.id === 'pipe' || b.id === 'canal_intake' || this.gameState.isTechUnlocked(`tech_${b.id}`)
+        unlocked: b.unlockedByDefault || this.gameState.isTechUnlocked(b.id) || this.gameState.isTechUnlocked(`tech_${b.id}`)
       }));
     } else if (this.currentTab === 'demolish') {
       tools = [

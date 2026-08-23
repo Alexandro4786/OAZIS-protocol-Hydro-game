@@ -265,8 +265,8 @@ class OasisGame {
               return;
             }
           }
-          if (bldKey === 'deep_well' && tile.type === 'river') {
-            this.gameState.emit('notify', { type: 'warning', message: "Artezian qudug'i daryo ichiga emas, quruqlik/cho'lga o'rnatiladi!" });
+          if ((bldKey === 'well' || bldKey === 'windmill_pump' || bldKey === 'deep_well') && tile.type === 'river') {
+            this.gameState.emit('notify', { type: 'warning', message: "Quduq va nasoslar daryo ichiga emas, quruqlik/cho'lga o'rnatiladi!" });
             return;
           }
           if (this.gameState.spendBudget(bldConfig.cost)) {
@@ -275,7 +275,7 @@ class OasisGame {
             this.gridWorld.updateNetworkConnectivity();
             this.audioManager.playBuild();
             this.buildingRenderer.sync();
-            this.gameState.emit('notify', { type: 'success', message: `${bldConfig.name} qurildi (-$${bldConfig.cost})` });
+            this.gameState.emit('notify', { type: 'success', message: `${bldConfig.name} qurildi (-$${bldConfig.cost})! 🕳️💧` });
           }
         }
       }

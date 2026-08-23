@@ -280,19 +280,45 @@ export const BUILDINGS = {
     energyUsage: 1.5,
     type: 'source',
     sourceType: 'surface',
+    unlockedByDefault: true,
     icon: '🏞️',
-    description: "Er usti kanali yoki daryodan arzon suv tortib beradi."
+    description: "Daryo yoki kanal ustiga/qirg'og'iga o'rnatiladi. Yer usti daryo suvini tortadi."
+  },
+  well: {
+    id: 'well',
+    name: "Yer Osti Quduq (Qazish)",
+    cost: 160,
+    waterSupplyPerHour: 40,
+    energyUsage: 0,
+    type: 'source',
+    sourceType: 'aquifer',
+    unlockedByDefault: true,
+    icon: '🕳️',
+    description: "Cho'lning istalgan joyida yer osti akviferiga quduq qazish. Boshlang'ich arzon suv manbai."
+  },
+  windmill_pump: {
+    id: 'windmill_pump',
+    name: "Shamol Quduq Nasosi (Eko)",
+    cost: 260,
+    waterSupplyPerHour: 75,
+    energyUsage: 0,
+    type: 'source',
+    sourceType: 'aquifer',
+    unlockedByDefault: true,
+    icon: '💨',
+    description: "Shamol generatori bilan ishlovchi avtomatik nasos. 0 elektr sarfi! Shamol kuchi bilan yer osti suvini chiqaradi."
   },
   deep_well: {
     id: 'deep_well',
-    name: "Arteziyan Quduq (VFD Nasos)",
-    cost: 650,
-    waterSupplyPerHour: 120,
-    energyUsage: 4.0,
+    name: "Elektr VFD Chuqur Nasos",
+    cost: 480,
+    waterSupplyPerHour: 150,
+    energyUsage: 2.5,
     type: 'source',
     sourceType: 'aquifer',
-    icon: '🏗️',
-    description: "Yer osti akviferidan chuqur nasos yordamida suv chiqaradi. Ortiqcha ishlatilsa akvifer sathi tushadi."
+    unlockedByDefault: true,
+    icon: '⚡',
+    description: "Kuchli elektr nasos stansiyasi. Katta maydonlarni yuqori bosimli yer osti suvi bilan ta'minlaydi."
   },
   pipe: {
     id: 'pipe',
@@ -300,6 +326,7 @@ export const BUILDINGS = {
     cost: 15,
     capacity: 100,
     type: 'pipe',
+    unlockedByDefault: true,
     icon: '🚰',
     description: "Suvni nasoslardan sug'orish klasterlariga taqsimlaydi."
   },
@@ -308,8 +335,9 @@ export const BUILDINGS = {
     name: "SCADA & Ob-havo Stansiyasi",
     cost: 400,
     energyUsage: 1.0,
-    radius: 4, // 4 katak radiusdagi barcha sensorlarni qamrab oladi
+    radius: 4,
     type: 'iot',
+    unlockedByDefault: false,
     icon: '📡',
     description: "Atrofdagi tuproq datchiklari ma'lumotlarini to'playdi va AI dozalashni faollashtiradi."
   },
@@ -317,8 +345,9 @@ export const BUILDINGS = {
     id: 'solar_array',
     name: "Quyosh Fotoelektr Stansiyasi",
     cost: 500,
-    energyGen: 8.0, // +8 kW toza energiya
+    energyGen: 8.0,
     type: 'energy',
+    unlockedByDefault: false,
     icon: '☀️',
     description: "Nasoslar va SCADA tizimini bepul quyosh energiyasi bilan ta'minlaydi."
   }
