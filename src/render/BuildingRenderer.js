@@ -33,11 +33,23 @@ export class BuildingRenderer {
     this.pipeMat = new THREE.MeshStandardMaterial({ color: 0x455a64, metalness: 0.8, roughness: 0.3 });
 
     this.activePipeMat = new THREE.MeshStandardMaterial({
-      color: 0x00bcd4,
+      color: 0x00e5ff,
+      metalness: 0.3,
+      roughness: 0.1,
+      emissive: 0x00bcd4,
+      emissiveIntensity: 0.75
+    });
+
+    this.pipeDryMat = new THREE.MeshStandardMaterial({
+      color: 0x546e7a,
       metalness: 0.6,
-      roughness: 0.2,
-      emissive: 0x006064,
-      emissiveIntensity: 0.4
+      roughness: 0.4
+    });
+
+    this.pumpBeaconMat = new THREE.MeshStandardMaterial({
+      color: 0x00e5ff,
+      emissive: 0x00e5ff,
+      emissiveIntensity: 1.0
     });
 
     // Material for sprinkler rotation
@@ -45,7 +57,12 @@ export class BuildingRenderer {
   }
 
   update(time, dt) {
-    // 1. Sprinkler aylanish animatsiyasi
+    // 1. Quvurlardagi suv oqimi pulsatsiyasi
+    const pulse = 0.6 + Math.sin(time * 5.0) * 0.35;
+    this.activePipeMat.emissiveIntensity = pulse;
+    this.pumpBeaconMat.emissiveIntensity = 0.7 + Math.sin(time * 8.0) * 0.3;
+
+    // 2. Sprinkler aylanish animatsiyasi
     this.irrigationMeshes.forEach((meshObj) => {
       if (meshObj.type === 'sprinkler' && meshObj.active) {
         meshObj.rotator.rotation.y += dt * 3.5;
@@ -54,7 +71,7 @@ export class BuildingRenderer {
       }
     });
 
-    // 2. Ekinlar tebranishi (shabboda)
+    // 3. Ekinlar tebranishi (shabboda)
     this.cropMeshes.forEach((mesh) => {
       if (mesh.sway) {
         mesh.rotation.z = Math.sin(time * 2.5 + mesh.position.x) * 0.06;
@@ -107,20 +124,40 @@ export class BuildingRenderer {
     group.position.set(x, y, z);
 
     if (tile.building === 'canal_intake') {
-      // Suv nasos stansiyasi
-      const stationGeo = new THREE.BoxGeometry(1.2, 0.8, 1.2);
-      const stationMat = new THREE.MeshStandardMaterial({ color: 0x37474f, metalness: 0.5 });
+      // Daryo qirg'og'idagi kuchli nasos stansiyasi
+      const stationGeo = new THREE.BoxGeometry(1.3, 0.85, 1.3);
+      const stationMat = new THREE.MeshStandardMaterial({ color: 0x0277bd, metalness: 0.6, roughness: 0.2 });
       const station = new THREE.Mesh(stationGeo, stationMat);
-      station.position.y = 0.4;
+      station.position.y = 0.42;
       station.castShadow = true;
       group.add(station);
 
-      // Nasos trubasi
-      const intakePipeGeo = new THREE.CylinderGeometry(0.18, 0.18, 1.2, 8);
-      const intakePipe = new THREE.Mesh(intakePipeGeo, this.pipeMat);
-      intakePipe.rotation.z = Math.PI / 3;
-      intakePipe.position.set(-0.6, 0.2, 0);
-      group.add(intakePipe);
+      const roofGeo = new THREE.ConeGeometry(1.1, 0.5, 4);
+      const roofMat = new THREE.MeshStandardMaterial({ color: 0x01579b });
+      const roof = new THREE.Mesh(roofGeo, roofMat);
+      roof.rotation.y = Math.PI / 4;
+      roof.position.y = 1.1;
+      group.add(roof);
+
+      // Daryo ichiga tushuvchi so'rish trubasi
+      const suctionPipeGeo = new THREE.CylinderGeometry(0.2, 0.2, 1.5, 10);
+      const suctionPipe = new THREE.Mesh(suctionPipeGeo, this.activePipeMat);
+      suctionPipe.rotation.z = Math.PI / 3;
+      suctionPipe.position.set(-0.8, 0.15, 0);
+      group.add(suctionPipe);
+
+      // Chiqish quvuri (Quruqlik tomon ulanadigan quvur)
+      const outletPipeGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.9, 10);
+      const outletPipe = new THREE.Mesh(outletPipeGeo, this.activePipeMat);
+      outletPipe.rotation.z = Math.PI / 2;
+      outletPipe.position.set(0.65, 0.18, 0);
+      group.add(outletPipe);
+
+      // Suv indikatori (Blink LED)
+      const beaconGeo = new THREE.SphereGeometry(0.18, 8, 8);
+      const beacon = new THREE.Mesh(beaconGeo, this.pumpBeaconMat);
+      beacon.position.set(0, 1.5, 0);
+      group.add(beacon);
     } else if (tile.building === 'deep_well') {
       // Arteziyan quduq vishkasi
       const towerGeo = new THREE.CylinderGeometry(0.2, 0.7, 2.2, 4);
@@ -189,35 +226,67 @@ export class BuildingRenderer {
       return;
     }
 
+    // 4 tomonlama qo'shnilarni tekshirish
+    const dirs = [
+      { dx: 0, dy: 1, rot: 'x' },   // Janub
+      { dx: 0, dy: -1, rot: 'x' },  // Shimol
+      { dx: 1, dy: 0, rot: 'z' },   // Sharq
+      { dx: -1, dy: 0, rot: 'z' }   // G'arb
+    ];
+
+    const connectedDirs = [];
+    dirs.forEach(d => {
+      const n = this.gridWorld.getTile(tile.x + d.dx, tile.y + d.dy);
+      if (n && (n.hasPipe || n.building === 'canal_intake' || n.building === 'deep_well' || n.irrigation !== null)) {
+        connectedDirs.push(d);
+      }
+    });
+
+    const isWater = tile.isConnectedToWater;
+    const mask = `${isWater ? 'W1' : 'W0'}_${connectedDirs.map(d => `${d.dx}_${d.dy}`).join(',')}`;
+
+    if (existing && existing.userData?.mask === mask) {
+      return; // Allaqachon to'g'ri ulangan
+    }
+
     if (existing) {
-      existing.material = tile.isConnectedToWater ? this.activePipeMat : this.pipeMat;
-      return;
+      this.objectGroup.remove(existing);
     }
 
     const pipeGroup = new THREE.Group();
     pipeGroup.position.set(x, y, z);
+    pipeGroup.userData = { mask };
 
-    // Markaziy ulanish bo'g'ini
-    const nodeGeo = new THREE.SphereGeometry(0.18, 8, 8);
-    const nodeMat = tile.isConnectedToWater ? this.activePipeMat : this.pipeMat;
-    const nodeMesh = new THREE.Mesh(nodeGeo, nodeMat);
-    nodeMesh.position.y = 0.1;
+    const curMat = isWater ? this.activePipeMat : this.pipeDryMat;
+
+    // Markaziy ulanish bo'g'ini (Hub Joint)
+    const nodeGeo = new THREE.SphereGeometry(0.19, 10, 10);
+    const nodeMesh = new THREE.Mesh(nodeGeo, curMat);
+    nodeMesh.position.y = 0.14;
     pipeGroup.add(nodeMesh);
 
-    // Qo'shni quvurlarga yo'nalishlar
-    const neighbors = this.gridWorld.getNeighbors(tile.x, tile.y);
-    neighbors.forEach(n => {
-      if (n.hasPipe || n.building) {
-        const dx = n.x - tile.x;
-        const dy = n.y - tile.y;
-        const segGeo = new THREE.CylinderGeometry(0.08, 0.08, TILE_SIZE / 2, 8);
-        const segMesh = new THREE.Mesh(segGeo, nodeMat);
-        segMesh.position.set(dx * (TILE_SIZE / 4), 0.1, dy * (TILE_SIZE / 4));
-        if (dx !== 0) segMesh.rotation.z = Math.PI / 2;
-        if (dy !== 0) segMesh.rotation.x = Math.PI / 2;
+    // Barcha ulangan yo'nalishlarga to'liq chekkagacha yetib boruvchi quvurlar
+    if (connectedDirs.length > 0) {
+      connectedDirs.forEach(d => {
+        const segGeo = new THREE.CylinderGeometry(0.13, 0.13, TILE_SIZE / 2, 10);
+        const segMesh = new THREE.Mesh(segGeo, curMat);
+        segMesh.position.set(d.dx * (TILE_SIZE / 4), 0.14, d.dy * (TILE_SIZE / 4));
+        
+        if (d.rot === 'z') {
+          segMesh.rotation.z = Math.PI / 2;
+        } else {
+          segMesh.rotation.x = Math.PI / 2;
+        }
         pipeGroup.add(segMesh);
-      }
-    });
+      });
+    } else {
+      // Hali ulanmagan yolg'iz quvur (Kichik ko'ndalang qirra bilan ko'rsatish)
+      const stubGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.4, 8);
+      const stubMesh = new THREE.Mesh(stubGeo, curMat);
+      stubMesh.rotation.z = Math.PI / 2;
+      stubMesh.position.y = 0.14;
+      pipeGroup.add(stubMesh);
+    }
 
     this.objectGroup.add(pipeGroup);
     this.pipeMeshes.set(key, pipeGroup);

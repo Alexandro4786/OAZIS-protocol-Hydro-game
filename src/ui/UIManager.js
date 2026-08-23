@@ -424,7 +424,17 @@ export class UIManager {
     }
 
     document.getElementById('insp-flow').innerText = `${(tile.currentFlow || 0).toFixed(1)} m³/soat`;
-    document.getElementById('insp-network').innerText = tile.isConnectedToWater ? '✅ Suv tarmog\'iga ulangan' : '❌ Quvur yetib bormagan';
+    
+    // Suv tarmog'i ulanish tavsifi
+    let netStatus = '❌ Quvur yetib bormagan (Daryo nasosiga ulang)';
+    if (tile.building === 'canal_intake') {
+      netStatus = '🌊 Asosiy Daryo Nasosi (Boshlang\'ich Suv Manbasi)';
+    } else if (tile.building === 'deep_well') {
+      netStatus = '🏗️ Arteziyan Quduq (Yer osti suvi manbasi)';
+    } else if (tile.isConnectedToWater) {
+      netStatus = '✅ Suv manbasiga ulangan (Oqim faol 💧)';
+    }
+    document.getElementById('insp-network').innerText = netStatus;
 
     // Tugmalar holati
     const harvestBtn = document.getElementById('btn-insp-harvest');
