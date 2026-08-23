@@ -686,19 +686,209 @@ export class BuildingRenderer {
           }
         }
       }
-    } else if (cropType === 'wheat' || cropType === 'corn') {
-      const stalkCount = isWithered ? 4 : (6 + stage * 2);
+    } else if (cropType === 'corn') {
+      // ===== MAKKAJO'XORI (CORN) 🌽 =====
+      if (isWithered) {
+        // Qurigan makkapoya
+        const deadStalkMat = new THREE.MeshStandardMaterial({ color: 0x6d4c41, roughness: 0.9 });
+        const deadLeafMat = new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.95 });
+        for (let i = 0; i < 4; i++) {
+          const offX = (i % 2 === 0 ? -0.25 : 0.25) + (Math.random() - 0.5) * 0.1;
+          const offZ = (i < 2 ? -0.25 : 0.25) + (Math.random() - 0.5) * 0.1;
+          const height = 0.9 + Math.random() * 0.3;
+          const stalkGeo = new THREE.CylinderGeometry(0.025, 0.045, height, 5);
+          const stalk = new THREE.Mesh(stalkGeo, deadStalkMat);
+          stalk.position.set(offX, height / 2, offZ);
+          stalk.rotation.z = (Math.random() - 0.5) * 0.6;
+          stalk.rotation.x = (Math.random() - 0.5) * 0.6;
+          cropGroup.add(stalk);
+
+          // Qurigan osilgan barglar
+          for (let l = 0; l < 3; l++) {
+            const leafGeo = new THREE.ConeGeometry(0.06, 0.45, 3);
+            const leaf = new THREE.Mesh(leafGeo, deadLeafMat);
+            leaf.rotation.x = Math.PI / 1.5;
+            leaf.rotation.y = (l / 3) * Math.PI * 2;
+            leaf.position.set(offX, height * (0.3 + l * 0.2), offZ);
+            cropGroup.add(leaf);
+          }
+        }
+      } else {
+        // Tirik, navqiron makkajo'xori
+        const cornStalkMat = new THREE.MeshStandardMaterial({
+          color: tile.crop.health < 40 ? 0x9e9d24 : 0x2e7d32,
+          roughness: 0.6
+        });
+        const cornLeafMat = new THREE.MeshStandardMaterial({
+          color: tile.crop.health < 40 ? 0xafb42b : 0x388e3c,
+          roughness: 0.65,
+          flatShading: true
+        });
+
+        // 4 ta baland va mustahkam makkapoya klasteri
+        const plantCount = 3 + (stage >= 2 ? 1 : 0);
+        const stalkHeight = 0.4 + stage * 0.32; // stage 4 da 1.7m balandlik
+
+        for (let p = 0; p < plantCount; p++) {
+          const plantGroup = new THREE.Group();
+          const pAngle = (p / plantCount) * Math.PI * 2;
+          const pr = 0.28;
+          plantGroup.position.set(Math.cos(pAngle) * pr, 0, Math.sin(pAngle) * pr);
+
+          // 1. Bo'g'imli asosiy poya (Jointed Stalk)
+          const stalkGeo = new THREE.CylinderGeometry(0.03, 0.05, stalkHeight, 6);
+          const stalk = new THREE.Mesh(stalkGeo, cornStalkMat);
+          stalk.position.y = stalkHeight / 2;
+          stalk.castShadow = true;
+          plantGroup.add(stalk);
+
+          // 2. Keng yoyilgan kaskad barglar (Cascading Curved Leaves)
+          const leafLayers = 2 + stage * 2;
+          for (let l = 0; l < leafLayers; l++) {
+            const lHeight = (l / leafLayers) * stalkHeight * 0.85 + 0.1;
+            const lAngle = (l * 2.4) + pAngle;
+            const leafLength = 0.25 + stage * 0.12;
+
+            // Kavisli egilgan uzun barg
+            const leafGeo = new THREE.BoxGeometry(0.08, 0.015, leafLength);
+            const leaf = new THREE.Mesh(leafGeo, cornLeafMat);
+            leaf.position.set(0, lHeight, leafLength / 2);
+            leaf.rotation.x = -Math.PI / 4 - (l % 2) * 0.15; // Pastga egilgan
+            
+            const leafPivot = new THREE.Group();
+            leafPivot.position.y = lHeight;
+            leafPivot.rotation.y = lAngle;
+            leafPivot.add(leaf);
+            plantGroup.add(leafPivot);
+          }
+
+          // 3. RO'VAK & GULLASH (Corn Tassel at the Top) - Stage >= 2
+          if (stage >= 2) {
+            const tasselMat = new THREE.MeshStandardMaterial({
+              color: stage >= 4 ? 0xffd54f : 0xffea00,
+              roughness: 0.5
+            });
+            // Markaziy ro'vak shoxchasi
+            const tasselCenterGeo = new THREE.CylinderGeometry(0.01, 0.02, 0.35, 4);
+            const tasselCenter = new THREE.Mesh(tasselCenterGeo, tasselMat);
+            tasselCenter.position.y = stalkHeight + 0.15;
+            plantGroup.add(tasselCenter);
+
+            // Yon ro'vak patlari
+            for (let t = 0; t < 5; t++) {
+              const tFeatherGeo = new THREE.CylinderGeometry(0.008, 0.015, 0.22, 3);
+              const tFeather = new THREE.Mesh(tFeatherGeo, tasselMat);
+              const tAngle = (t / 5) * Math.PI * 2;
+              tFeather.position.set(Math.cos(tAngle) * 0.04, stalkHeight + 0.12, Math.sin(tAngle) * 0.04);
+              tFeather.rotation.set(Math.cos(tAngle) * 0.6, tAngle, Math.sin(tAngle) * 0.6);
+              plantGroup.add(tFeather);
+            }
+          }
+
+          // 4. MAKKAJO'XORI SO'TALARI (Corn Ears & Silks) - Stage >= 3
+          if (stage >= 3) {
+            const earCount = stage === 4 ? 2 : 1;
+            for (let e = 0; e < earCount; e++) {
+              const earGroup = new THREE.Group();
+              const earY = stalkHeight * (0.4 + e * 0.25);
+              const earAngle = pAngle + (e === 0 ? 0.8 : -0.8);
+              earGroup.position.set(0, earY, 0);
+              earGroup.rotation.y = earAngle;
+
+              // So'ta qobig'i (Husk)
+              const huskMat = new THREE.MeshStandardMaterial({
+                color: stage === 4 ? 0xcddc39 : 0x4caf50,
+                roughness: 0.7
+              });
+              const huskGeo = new THREE.CylinderGeometry(0.04, 0.06, 0.35, 8);
+              const husk = new THREE.Mesh(huskGeo, huskMat);
+              husk.rotation.x = Math.PI / 3.5;
+              husk.position.set(0, 0.1, 0.1);
+              earGroup.add(husk);
+
+              // Agar pishgan bo'lsa (Stage 4), yorib chiqqan tillarang makkajo'xori donalari!
+              if (stage === 4) {
+                const ripeCornMat = new THREE.MeshStandardMaterial({
+                  color: 0xffd600,
+                  emissive: 0xffab00,
+                  emissiveIntensity: 0.35,
+                  metalness: 0.2,
+                  roughness: 0.3
+                });
+                const cobGeo = new THREE.CylinderGeometry(0.045, 0.05, 0.28, 10);
+                const cob = new THREE.Mesh(cobGeo, ripeCornMat);
+                cob.rotation.x = Math.PI / 3.5;
+                cob.position.set(0, 0.16, 0.14);
+                cob.castShadow = true;
+                earGroup.add(cob);
+
+                // Popuk (Corn Silk)
+                const silkMat = new THREE.MeshStandardMaterial({ color: 0x8d6e63, roughness: 0.9 });
+                const silkGeo = new THREE.ConeGeometry(0.03, 0.12, 4);
+                const silk = new THREE.Mesh(silkGeo, silkMat);
+                silk.rotation.x = Math.PI / 3.5;
+                silk.position.set(0, 0.28, 0.22);
+                earGroup.add(silk);
+              }
+
+              plantGroup.add(earGroup);
+            }
+          }
+
+          cropGroup.add(plantGroup);
+        }
+
+        // Stage 4: Dala burchagida terilgan makkajo'xori savati / taxlami!
+        if (stage === 4) {
+          const crateMat = new THREE.MeshStandardMaterial({ color: 0x795548, roughness: 0.8 });
+          const crateGeo = new THREE.BoxGeometry(0.35, 0.2, 0.35);
+          const crate = new THREE.Mesh(crateGeo, crateMat);
+          crate.position.set(0.45, 0.1, 0.45);
+          cropGroup.add(crate);
+
+          // Savat ichidagi sariq so'talar
+          const cornItemMat = new THREE.MeshStandardMaterial({ color: 0xffc107, roughness: 0.4 });
+          for (let c = 0; c < 3; c++) {
+            const itemGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.22, 6);
+            const item = new THREE.Mesh(itemGeo, cornItemMat);
+            item.rotation.z = Math.PI / 3;
+            item.rotation.y = (c / 3) * Math.PI;
+            item.position.set(0.45 + (c - 1) * 0.07, 0.22, 0.45);
+            cropGroup.add(item);
+          }
+        }
+      }
+    } else if (cropType === 'wheat') {
+      // ===== BUG'DOY (WHEAT) 🌾 =====
+      const stalkCount = isWithered ? 8 : (12 + stage * 3);
+      const isRipe = stage >= 3;
+      let wheatColor = isWithered ? 0x8d6e63 : (isRipe ? 0xfbc02d : 0x689f38);
+      const wheatMat = new THREE.MeshStandardMaterial({ color: wheatColor, roughness: 0.7 });
+      const spikeMat = new THREE.MeshStandardMaterial({
+        color: isRipe ? 0xffd54f : 0x8bc34a,
+        emissive: isRipe ? 0xffb300 : 0x000000,
+        emissiveIntensity: isRipe ? 0.25 : 0,
+        roughness: 0.6
+      });
+
       for (let i = 0; i < stalkCount; i++) {
-        const height = (0.3 + stage * 0.25) * (isWithered ? 0.6 : (0.8 + Math.random() * 0.4));
-        const stalkGeo = new THREE.CylinderGeometry(0.02, 0.03, height, 4);
-        let color = plantColor;
-        if (!isWithered && cropType === 'wheat' && stage >= 3) color = 0xfbc02d;
-        const stalk = new THREE.Mesh(stalkGeo, new THREE.MeshStandardMaterial({ color }));
-        const offX = (Math.random() - 0.5) * 1.0;
-        const offZ = (Math.random() - 0.5) * 1.0;
+        const height = (0.35 + stage * 0.22) * (isWithered ? 0.7 : (0.85 + Math.random() * 0.3));
+        const stalkGeo = new THREE.CylinderGeometry(0.015, 0.025, height, 4);
+        const stalk = new THREE.Mesh(stalkGeo, wheatMat);
+        const offX = (Math.random() - 0.5) * 1.1;
+        const offZ = (Math.random() - 0.5) * 1.1;
         stalk.position.set(offX, height / 2, offZ);
-        if (isWithered) stalk.rotation.z = (Math.random() - 0.5) * 0.8; // Egilib qolgan
+        if (isWithered) stalk.rotation.z = (Math.random() - 0.5) * 0.9;
         cropGroup.add(stalk);
+
+        // Boshoq (Wheat Spike) - Stage >= 2
+        if (stage >= 2) {
+          const spikeGeo = new THREE.CylinderGeometry(0.03, 0.035, 0.22, 6);
+          const spike = new THREE.Mesh(spikeGeo, spikeMat);
+          spike.position.set(offX, height, offZ);
+          spike.rotation.z = (Math.random() - 0.5) * 0.3;
+          cropGroup.add(spike);
+        }
       }
     } else if (cropType === 'orchard') {
       // ===== INTENSIV MEVALI OLMA BOG'I =====
