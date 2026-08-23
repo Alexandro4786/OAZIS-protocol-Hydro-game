@@ -93,7 +93,10 @@ export class UIManager {
     });
 
     // 7. Inspector tugmalari
-    document.getElementById('insp-close')?.addEventListener('click', () => {
+    document.getElementById('insp-close')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.audioManager.playClick();
+      this.gameState.selectTile(null);
       this.inspectorPanel.style.display = 'none';
     });
     document.getElementById('btn-insp-harvest')?.addEventListener('click', () => {
@@ -370,6 +373,8 @@ export class UIManager {
     // Tanlangan katak ma'lumotlarini yangilab turish
     if (this.gameState.selectedTile) {
       this.updateInspector(this.gameState.selectedTile);
+    } else {
+      this.inspectorPanel.style.display = 'none';
     }
 
     // O'yin yakunini tekshirish

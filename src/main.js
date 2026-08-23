@@ -51,6 +51,9 @@ class OasisGame {
 
     // Qayta boshlash hodisasi
     this.gameState.on('restartGame', () => this.restart());
+    this.gameState.on('tileSelected', (tile) => {
+      this.sceneManager.setSelectedTile(tile ? { x: tile.x, y: tile.y } : null);
+    });
 
     // Loop
     requestAnimationFrame((t) => this.loop(t));
