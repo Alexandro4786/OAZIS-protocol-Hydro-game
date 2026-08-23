@@ -62,10 +62,8 @@ export class UIManager {
     Object.entries(speedButtons).forEach(([id, spd]) => {
       document.getElementById(id)?.addEventListener('click', (e) => {
         this.audioManager.playClick();
-        document.querySelectorAll('.top-controls .icon-btn').forEach(b => {
-          if (b.id.startsWith('btn-speed')) b.classList.remove('active');
-        });
-        e.target.classList.add('active');
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+        e.target.closest('.speed-btn')?.classList.add('active');
         this.gameState.setSpeed(spd);
       });
     });
@@ -249,7 +247,7 @@ export class UIManager {
 
     // Ob-havo
     this.statSeasonDay.innerText = `${Math.floor(res.day)}-kun • ${res.season}`;
-    this.statTempEt0.innerText = `${Math.round(weather.temperature)}°C (ET₀: ${weather.et0.toFixed(1)})`;
+    this.statTempEt0.innerHTML = `${Math.round(weather.temperature)}°C <span class="et0-sub">(ET₀: ${weather.et0.toFixed(1)})</span>`;
 
     // Inqiroz Bannerini yangilash
     if (crisis) {

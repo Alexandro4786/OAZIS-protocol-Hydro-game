@@ -13,58 +13,59 @@
 
   <!-- Top HUD Bar -->
   <header id="top-bar" class="glass-panel">
-    <div class="logo-area">
+    <div class="logo-area" title="Oasis Protocol: Suv Risolasi & Ekologik Strategiya">
       <span class="logo-icon">💧</span>
-      <div>
+      <div class="logo-text-group">
         <div class="logo-title">OASIS PROTOCOL</div>
-        <div class="logo-sub">Suv Risolasi & Ekologik Strategiya</div>
       </div>
     </div>
 
     <!-- Resource Stats -->
     <div class="resource-stats">
       <!-- Byudjet -->
-      <div class="stat-box" title="Mavjud mablag'">
+      <div class="stat-pill" title="Mavjud byudjet">
         <span class="stat-icon">💰</span>
         <div class="stat-info">
           <span class="stat-label">Byudjet</span>
-          <span id="stat-budget" class="stat-value" style="color: #00e676;">$2,500</span>
+          <span id="stat-budget" class="stat-value val-green">$2,500</span>
         </div>
       </div>
 
       <!-- Er Usti Suvi -->
-      <div class="stat-box" title="Kanal va Daryo suv zaxirasi">
+      <div class="stat-pill" title="Kanal va daryo suv zaxirasi">
         <span class="stat-icon">🏞️</span>
         <div class="stat-info">
           <span class="stat-label">Daryo Suvi</span>
-          <span id="stat-surface-water" class="stat-value" style="color: #00f0ff;">6,000 m³</span>
+          <span id="stat-surface-water" class="stat-value val-cyan">6,000 m³</span>
         </div>
       </div>
 
       <!-- Akvifer (Yer osti suvlari) -->
-      <div class="stat-box" title="Yer osti akvifer zaxirasi (haddan tashqari tortilsa sho'rlanadi)">
+      <div class="stat-pill" title="Yer osti akvifer zaxirasi (haddan tashqari tortilsa sho'rlanadi)">
         <span class="stat-icon">🌊</span>
         <div class="stat-info">
-          <span class="stat-label">Akvifer Zaxirasi</span>
-          <span id="stat-aquifer" class="stat-value" style="color: #4fc3f7;">15,000 m³</span>
+          <span class="stat-label">Akvifer</span>
+          <span id="stat-aquifer" class="stat-value val-blue">15,000 m³</span>
         </div>
       </div>
 
       <!-- O'rtacha Tuproq Namligi -->
-      <div class="stat-box" title="Kataklarning o'rtacha namlik darajasi">
+      <div class="stat-pill" title="Tuproqning o'rtacha namlik darajasi">
         <span class="stat-icon">🌱</span>
         <div class="stat-info">
-          <span class="stat-label">Tuproq Namligi</span>
-          <span id="stat-moisture" class="stat-value" style="color: #aed581;">45% VWC</span>
+          <span class="stat-label">Namlik</span>
+          <span id="stat-moisture" class="stat-value val-lime">45% VWC</span>
         </div>
       </div>
 
       <!-- Eko-Ball (Oasis Index) -->
-      <div class="stat-box eco-score-box" title="Oasis Index: Suvni tejash va hosildorlik darajasi">
+      <div class="stat-pill eco-score-pill" title="Oasis Index: Suvni tejash va hosildorlik darajasi">
         <span class="stat-icon">✨</span>
         <div class="stat-info">
-          <span class="stat-label">Oasis Index</span>
-          <span id="stat-eco-score" class="stat-value" style="color: #00e676;">15%</span>
+          <div class="eco-head">
+            <span class="stat-label">Oasis Index</span>
+            <span id="stat-eco-score" class="stat-value val-green">15%</span>
+          </div>
           <div class="eco-progress-bar">
             <div id="eco-progress-fill" class="eco-progress-fill"></div>
           </div>
@@ -72,26 +73,37 @@
       </div>
 
       <!-- Ob-havo & Bug'lanish (ET0) -->
-      <div class="stat-box" title="Kun, fasl va bug'lanish indeksi">
+      <div class="stat-pill weather-pill" title="Kun, fasl, harorat va bug'lanish indeksi">
         <span class="stat-icon">☀️</span>
         <div class="stat-info">
           <span id="stat-season-day" class="stat-label">1-kun • Bahor</span>
-          <span id="stat-temp-et0" class="stat-value" style="color: #ffb74d;">28°C (ET₀: 4.5)</span>
+          <span id="stat-temp-et0" class="stat-value val-orange">28°C <span class="et0-sub">(ET₀: 4.5)</span></span>
         </div>
       </div>
     </div>
 
     <!-- Controls -->
     <div class="top-controls">
-      <button id="btn-speed-pause" class="icon-btn" title="To'xtatish (Space)">⏸️</button>
-      <button id="btn-speed-1x" class="icon-btn active" title="Oddiy tezlik">1x</button>
-      <button id="btn-speed-2x" class="icon-btn" title="Tezlashtirish">2x</button>
-      <button id="btn-speed-5x" class="icon-btn" title="Juda tez">5x</button>
-      <button id="btn-scada-modal" class="icon-btn" title="SCADA & AI IoT Boshqaruv Markazi">📡 SCADA</button>
-      <button id="btn-tech-modal" class="icon-btn" title="Sug'orish Texnologiyalari Daraxti">🧬 Tech Tree</button>
-      <button id="btn-audio-toggle" class="icon-btn" title="Ovozni yoqish/o'chirish">🔊</button>
-      <button id="btn-help-modal" class="icon-btn" title="Qo'llanma va qoidalar">❓</button>
-      <button id="btn-restart-game" class="icon-btn" style="border-color: rgba(255, 23, 68, 0.4); color: #ff8a80;" title="O'yinni yangitdan boshlash">🔄 Qayta Boshlash</button>
+      <!-- Speed segmented control -->
+      <div class="speed-group">
+        <button id="btn-speed-pause" class="speed-btn" title="To'xtatish (Space)">⏸</button>
+        <button id="btn-speed-1x" class="speed-btn active" title="1x Tezlik">1x</button>
+        <button id="btn-speed-2x" class="speed-btn" title="2x Tezlik">2x</button>
+        <button id="btn-speed-5x" class="speed-btn" title="5x Tezlik">5x</button>
+      </div>
+
+      <!-- Action buttons -->
+      <button id="btn-scada-modal" class="ctrl-btn btn-scada" title="SCADA & AI IoT Boshqaruv Markazi">
+        <span>📡</span> <span>SCADA</span>
+      </button>
+      <button id="btn-tech-modal" class="ctrl-btn btn-tech" title="Sug'orish Texnologiyalari Daraxti">
+        <span>🧬</span> <span>Tech Tree</span>
+      </button>
+      <button id="btn-audio-toggle" class="ctrl-btn icon-only" title="Ovozni yoqish/o'chirish">🔊</button>
+      <button id="btn-help-modal" class="ctrl-btn icon-only" title="Qo'llanma va qoidalar">❓</button>
+      <button id="btn-restart-game" class="ctrl-btn btn-danger" title="O'yinni yangitdan boshlash">
+        <span>🔄</span> <span>Qayta</span>
+      </button>
     </div>
   </header>
 
