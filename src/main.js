@@ -239,18 +239,36 @@ class OasisGame {
       return;
     }
 
-    // 5. Buzish / Tozalash
-    if (tool === 'demolish') {
-      if (tile.crop || tile.irrigation || tile.hasPipe || tile.building) {
-        tile.crop = null;
-        tile.irrigation = null;
-        tile.hasPipe = false;
-        if (tile.building && tile.building !== 'canal_intake') {
-          tile.building = null;
-        }
+    // 5. Ko'chirish (Green Farm 3 Move Mode)
+    if (tool === 'move_mode') {
+      const src = this.gameState.moveSourceTile;
+      if (!src) {
+        this.gameState.setTool('survey');
+        return;
+      }
+      const res = this.gridWorld.moveTileContent(src.x, src.y, x, y);
+      if (res.success) {
         this.audioManager.playBuild();
         this.buildingRenderer.sync();
-        this.gameState.emit('notify', { type: 'info', message: "Katak tozalandi." });
+        this.gameState.emit('notify', { type: 'success', message: res.message });
+        this.gameState.moveSourceTile = null;
+        this.gameState.setTool('survey');
+      } else {
+        this.gameState.emit('notify', { type: 'warning', message: res.message });
+      }
+      return;
+    }
+
+    // 6. Buzish / Sotish (60% Refund)
+    if (tool === 'demolish') {
+      const refund = this.gridWorld.demolishTile(x, y);
+      if (refund > 0) {
+        this.audioManager.playBuild();
+        this.buildingRenderer.sync();
+        this.gameState.emit('notify', { type: 'success', message: `Buzildi: +$${refund} qaytarildi (60% kompensatsiya)!` });
+        this.uiManager.spawnFloatingScore(window.innerWidth / 2, window.innerHeight / 2, `+$${refund} 💰`, 'refund');
+      } else {
+        this.audioManager.playClick();
       }
     }
   }

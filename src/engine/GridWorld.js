@@ -334,4 +334,80 @@ export class GridWorld {
       return null;
     }
   }
+
+  moveTileContent(fromX, fromY, toX, toY) {
+    const src = this.getTile(fromX, fromY);
+    const dest = this.getTile(toX, toY);
+
+    if (!src || !dest) return { success: false, message: "Katak topilmadi!" };
+    if (fromX === toX && fromY === toY) return { success: false, message: "Ayni shu katak tanlandi." };
+
+    const hasContent = src.crop || src.irrigation || src.hasPipe || src.building;
+    if (!hasContent) return { success: false, message: "Ko'chirish uchun obyekt mavjud emas!" };
+
+    // Daryo katagiga ko'chirish qoidalari
+    if (dest.type === 'river' && src.building !== 'canal_intake') {
+      return { success: false, message: "Daryo oqimiga ko'chirib bo'lmaydi!" };
+    }
+
+    // Agar maqsadda allaqachon bino yoki ekin bo'lsa
+    if (dest.building && src.building) {
+      return { success: false, message: "Maqsad katagida allaqachon inshoot mavjud!" };
+    }
+    if (dest.crop && src.crop) {
+      return { success: false, message: "Maqsad katagida allaqachon boshqa ekin mavjud!" };
+    }
+
+    // Obyektlarni ko'chirish
+    if (src.building) {
+      dest.building = src.building;
+      src.building = null;
+    }
+    if (src.hasPipe) {
+      dest.hasPipe = true;
+      src.hasPipe = false;
+    }
+    if (src.irrigation) {
+      dest.irrigation = src.irrigation;
+      dest.irrigationActive = src.irrigationActive;
+      src.irrigation = null;
+    }
+    if (src.crop) {
+      dest.crop = { ...src.crop };
+      src.crop = null;
+    }
+
+    this.updateNetworkConnectivity();
+    return { success: true, message: `Obyekt [${fromX}, ${fromY}] dan [${toX}, ${toY}] ga ko'chirildi!` };
+  }
+
+  demolishTile(x, y) {
+    const tile = this.getTile(x, y);
+    if (!tile) return 0;
+
+    let refund = 0;
+    if (tile.building && tile.building !== 'canal_intake' && BUILDINGS[tile.building]) {
+      refund += Math.round(BUILDINGS[tile.building].cost * 0.6);
+      tile.building = null;
+    }
+    if (tile.hasPipe) {
+      refund += Math.round(BUILDINGS.pipe.cost * 0.6);
+      tile.hasPipe = false;
+    }
+    if (tile.irrigation && IRRIGATION_TECH[tile.irrigation]) {
+      refund += Math.round(IRRIGATION_TECH[tile.irrigation].cost * 0.6);
+      tile.irrigation = null;
+    }
+    if (tile.crop && CROP_TYPES[tile.crop.type]) {
+      refund += Math.round(CROP_TYPES[tile.crop.type].seedCost * 0.3);
+      tile.crop = null;
+    }
+
+    if (refund > 0) {
+      this.gameState.addBudget(refund);
+    }
+
+    this.updateNetworkConnectivity();
+    return refund;
+  }
 }

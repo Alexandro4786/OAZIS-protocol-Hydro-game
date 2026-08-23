@@ -109,18 +109,48 @@ export class UIManager {
         this.updateInspector(this.gameState.selectedTile);
       }
     });
+    
+    // Green Farm 3 Style: Ko'chirish (Move)
+    document.getElementById('btn-insp-move')?.addEventListener('click', () => {
+      if (this.gameState.selectedTile) {
+        this.audioManager.playClick();
+        this.gameState.moveSourceTile = this.gameState.selectedTile;
+        this.gameState.setTool('move_mode');
+        this.gameState.emit('notify', {
+          type: 'info',
+          message: "Ko'chirish rejimi: Obyektni o'tkazmoqchi bo'lgan yangi bo'sh katak ustiga bosing."
+        });
+      }
+    });
+
+    // Green Farm 3 Style: Sotish / Buzish (60% Refund)
     document.getElementById('btn-insp-demolish')?.addEventListener('click', () => {
       if (this.gameState.selectedTile) {
         const t = this.gameState.selectedTile;
-        t.crop = null;
-        t.irrigation = null;
-        t.hasPipe = false;
-        if (t.building && t.building !== 'canal_intake') {
-          t.building = null;
-        }
+        const refund = this.gridWorld.demolishTile(t.x, t.y);
         this.audioManager.playBuild();
         this.updateInspector(t);
         this.gameState.emit('tileDemolished', t);
+        if (refund > 0) {
+          this.gameState.emit('notify', {
+            type: 'success',
+            message: `Buzildi: +$${refund} qaytarildi (60% kompensatsiya)!`
+          });
+          this.spawnFloatingScore(window.innerWidth / 2, window.innerHeight / 2, `+$${refund} 💰`, 'refund');
+        } else {
+          this.gameState.emit('notify', { type: 'info', message: "Katak tozalandi." });
+        }
+      }
+    });
+
+    // Bekor qilish tugmasi (Floating Action Bar & Esc)
+    document.getElementById('btn-cancel-action')?.addEventListener('click', () => {
+      this.cancelActiveAction();
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        this.cancelActiveAction();
       }
     });
 
@@ -151,6 +181,74 @@ export class UIManager {
     this.gameState.on('notify', (data) => this.showToast(data));
     this.gameState.on('tileSelected', (tile) => this.updateInspector(tile));
     this.gameState.on('techUnlocked', () => this.renderTools());
+    this.gameState.on('toolChanged', (toolId) => this.updateFloatingActionBar(toolId));
+    this.gameState.on('harvestSuccess', (data) => {
+      this.spawnFloatingScore(window.innerWidth / 2, window.innerHeight / 2 - 30, `+$${data.earnings} 💰`, 'money');
+    });
+  }
+
+  cancelActiveAction() {
+    this.audioManager.playClick();
+    this.gameState.moveSourceTile = null;
+    this.gameState.setTool('survey');
+    document.querySelectorAll('.tool-card').forEach(c => c.classList.remove('active'));
+    this.updateFloatingActionBar('survey');
+    this.gameState.emit('notify', { type: 'info', message: "Amal bekor qilindi (Tahlil rejimi)." });
+  }
+
+  updateFloatingActionBar(toolId) {
+    const bar = document.getElementById('floating-action-bar');
+    const title = document.getElementById('floating-action-title');
+    const icon = document.getElementById('floating-action-icon');
+    const desc = document.getElementById('floating-action-desc');
+    if (!bar) return;
+
+    if (!toolId || toolId === 'survey') {
+      bar.style.display = 'none';
+      return;
+    }
+
+    bar.style.display = 'flex';
+
+    if (toolId === 'move_mode') {
+      icon.innerText = '📦';
+      title.innerText = "Ko'chirish Rejimi";
+      desc.innerText = "Obyektni o'tkazmoqchi bo'lgan yangi katakni tanlang yoki Esc bosing";
+    } else if (toolId.startsWith('crop_')) {
+      const c = CROP_TYPES[toolId.replace('crop_', '')];
+      icon.innerText = c ? c.icon : '🌱';
+      title.innerText = `${c ? c.name : 'Ekin'} Ekish Rejimi ($${c ? c.seedCost : 0})`;
+      desc.innerText = "Katak ustiga bosib eking yoki Bekor qiling (Esc)";
+    } else if (toolId.startsWith('irr_')) {
+      const tech = IRRIGATION_TECH[toolId.replace('irr_', '')];
+      icon.innerText = tech ? tech.icon : '💧';
+      title.innerText = `${tech ? tech.shortName : 'Sug\'orish'} O'rnatish ($${tech ? tech.cost : 0})`;
+      desc.innerText = "Katak ustiga bosib o'rnating yoki Bekor qiling (Esc)";
+    } else if (toolId.startsWith('bld_')) {
+      const bldKey = toolId.replace('bld_', '');
+      const bld = BUILDINGS[bldKey];
+      icon.innerText = bld ? bld.icon : '🏗️';
+      title.innerText = `${bld ? bld.name : 'Inshoot'} Qurish ($${bld ? bld.cost : 0})`;
+      desc.innerText = "Katak ustiga bosib quring yoki Bekor qiling (Esc)";
+    } else if (toolId === 'demolish') {
+      icon.innerText = '🧹';
+      title.innerText = "Buzish / Sotish Rejimi (60% Qaytarish)";
+      desc.innerText = "O'chirmoqchi bo'lgan obyektingizni bosing";
+    }
+  }
+
+  spawnFloatingScore(x, y, text, type = 'money') {
+    const container = document.getElementById('floating-scores-container') || document.body;
+    const el = document.createElement('div');
+    el.className = `floating-score ${type}`;
+    el.innerText = text;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    container.appendChild(el);
+
+    setTimeout(() => {
+      el.remove();
+    }, 1400);
   }
 
   renderTools() {
