@@ -474,10 +474,10 @@ export const BUILDINGS = {
 export const TECH_NODES = [
   {
     id: 'tech_sprinkler',
-    tier: 2,
+    tier: 1,
     name: "Yomg'irlatish Tizimi",
-    cost: 200,
-    ecoRequirement: 0, // Boshlanishidayoq ochish mumkin!
+    cost: 200, // Boshlang'ich arzon
+    ecoRequirement: 0,
     prerequisites: [],
     unlocks: ['sprinkler'],
     description: "Purkagichli apparatlar orqali sug'orishga o'tish (suv isrofi 30% kamayadi)."
@@ -486,51 +486,61 @@ export const TECH_NODES = [
     id: 'tech_surface_drip',
     tier: 2,
     name: "Er Usti Tomchilatish",
-    cost: 350,
+    cost: 450, // Boshlang'ich qulay
     ecoRequirement: 5,
     prerequisites: ['tech_sprinkler'],
     unlocks: ['drip_surface'],
-    description: "Tomchilatish shlanglari va filtrlar orqali ekin qatoriga suv berish."
+    description: "Tomchilatish shlanglari va filtrlar orqali ekin qatoriga suv berish (45% suv tejamkorligi)."
   },
   {
     id: 'tech_sdi',
     tier: 3,
     name: "Yer Osti Tomchilatish (SDI)",
-    cost: 600,
-    ecoRequirement: 15,
+    cost: 1450, // Ilg'or texnologiya
+    ecoRequirement: 18,
     prerequisites: ['tech_surface_drip'],
     unlocks: ['sdi'],
-    description: "Kapillyar namlantirish texnologiyasi: bug'lanish deyarli nolga tushadi, 70% tejamkorlik."
+    description: "Kapillyar namlantirish texnologiyasi: bug'lanish deyarli nolga tushadi, 70% suv tejamkorligi."
   },
   {
     id: 'tech_iot_sensors',
     tier: 3,
     name: "IoT Tuproq Sensorlari",
-    cost: 500,
-    ecoRequirement: 15,
+    cost: 1200, // Ilg'or texnologiya
+    ecoRequirement: 18,
     prerequisites: ['tech_surface_drip'],
     unlocks: ['iot_tower'],
-    description: "VWC% va sho'rlanish datchiklari bilan qurollangan SCADA minoralari."
+    description: "VWC% va sho'rlanish datchiklari bilan qurollangan SCADA aloqa minoralari."
   },
   {
     id: 'tech_solar_power',
     tier: 3,
     name: "Agro-Voltaik Quyosh Panellari",
-    cost: 450,
-    ecoRequirement: 10,
+    cost: 1350, // Ilg'or energiya
+    ecoRequirement: 22,
     prerequisites: [],
     unlocks: ['solar_array'],
-    description: "Nasoslarni toza qayta tiklanuvchi energiya bilan quvvatlantirish."
+    description: "Nasoslarni toza qayta tiklanuvchi quyosh energiyasi bilan bepul quvvatlantirish."
   },
   {
     id: 'tech_ai_scada',
     tier: 4,
     name: "AI & Fuzzy-PID Avtomatik Dozalash",
-    cost: 950,
-    ecoRequirement: 30,
+    cost: 2800, // Apex ilmiy texnologiya
+    ecoRequirement: 40,
     prerequisites: ['tech_sdi', 'tech_iot_sensors'],
     unlocks: ['scada_ai'],
     description: "Inson aralashuvisiz real vaqtda evapotranspiratsiyani (ET₀) hisoblab suvni taqsimlovchi sun'iy intellekt."
+  },
+  {
+    id: 'tech_aquifer_recharge',
+    tier: 4,
+    name: "Akvifer Qayta To'ldirish & Tuzsizlantirish",
+    cost: 3800, // Elite Endgame
+    ecoRequirement: 55,
+    prerequisites: ['tech_solar_power'],
+    unlocks: [],
+    description: "Yer osti akviferining tuz darajasini kamaytiruvchi va sel suvlarini toza yer osti qatlamiga yo'naltiruvchi mega-tizim."
   }
 ];
 
