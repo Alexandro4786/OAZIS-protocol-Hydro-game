@@ -455,5 +455,13 @@ export const CRISIS_TYPES = {
     description: "Egatlab sug'orilgan hududlarda yer osti sho'r suvi ko'tarildi. Hosil nobud bo'lmasligi uchun drenaj va tejamkor usul kerak!",
     icon: '🧂',
     color: '#e0e0e0'
+  },
+  drainage_overflow: {
+    id: 'drainage_overflow',
+    name: "Drenaj To'lishi & Botqoqlanish",
+    duration: 30,
+    description: "Kuchli yog'ingarchilik sababli egatlarda suv to'planib qoldi. Tomchilatish yoki SDI tizimi hosilni asraydi!",
+    icon: '🌊',
+    color: '#00e5ff'
   }
 };

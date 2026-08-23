@@ -9,8 +9,19 @@ export class CrisisManager {
     this.crisisDurationLeft = 0;
   }
 
-  update(dt, weather) {
+  update(dt, weather = {}) {
     if (this.activeCrisis) {
+      // 1. Agar yomg'ir yoki sel boshlansa, issiqlik to'lqini va qurg'oqchilik avtomatik tugaydi!
+      if ((weather.rainRate > 0 || weather.id === 'rain' || weather.id === 'storm_flood') && 
+          (this.activeCrisis.id === 'heatwave' || this.activeCrisis.id === 'drought')) {
+        this.resolveCrisis();
+        this.gameState.emit('notify', {
+          type: 'success',
+          message: "🌧️ Yomg'ir va sel tufayli qurg'oqchilik/jazirama inqirozi barham topdi!"
+        });
+        return;
+      }
+
       this.crisisDurationLeft -= dt;
       
       // Inqiroz ta'sirlarini qo'llash
@@ -26,14 +37,22 @@ export class CrisisManager {
     } else {
       this.timerToNextCrisis -= dt;
       if (this.timerToNextCrisis <= 0) {
-        this.triggerRandomCrisis();
+        this.triggerRandomCrisis(weather);
       }
     }
   }
 
-  triggerRandomCrisis() {
-    const keys = Object.keys(CRISIS_TYPES);
-    const randomKey = keys[Math.floor(Math.random() * keys.length)];
+  triggerRandomCrisis(weather = {}) {
+    let availableKeys = Object.keys(CRISIS_TYPES);
+
+    // Yomg'ir yoki sel paytida qurg'oqchilik (drought) va jazirama (heatwave) bo'lishi MUMKIN EMAS!
+    if (weather.rainRate > 0 || weather.id === 'rain' || weather.id === 'storm_flood') {
+      availableKeys = availableKeys.filter(k => k !== 'heatwave' && k !== 'drought');
+    }
+
+    if (availableKeys.length === 0) return;
+
+    const randomKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
     const crisis = CRISIS_TYPES[randomKey];
 
     this.activeCrisis = { ...crisis };
