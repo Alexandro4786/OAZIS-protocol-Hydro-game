@@ -71,7 +71,7 @@ export const WEATHER_PRESETS = {
   },
   windy: {
     id: 'windy',
-    name: "Kuchli Shamol & Garmsel",
+    name: "Kuchli Shamol",
     icon: '💨',
     color: '#ffb74d',
     tempMod: +5,
@@ -86,7 +86,7 @@ export const WEATHER_PRESETS = {
   },
   storm_flood: {
     id: 'storm_flood',
-    name: "Kuchli Sel & Jala (Momaqaldiroq)",
+    name: "Kuchli Sel & Jala",
     icon: '⛈️',
     color: '#7c4dff',
     tempMod: -9,
@@ -98,7 +98,7 @@ export const WEATHER_PRESETS = {
     fogColor: '#0a0e17',
     sunIntensity: 0.35,
     moistureGainRate: 7.5,
-    riverSurgeRate: 60,
+    riverSurgeRate: 80,
     description: "XAVFLI METEO: Kuchli sel va jala! Daryo toshishi mumkin, rezervuarlar suv bilan to'lmoqda."
   }
 };

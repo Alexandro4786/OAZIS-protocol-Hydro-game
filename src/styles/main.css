@@ -20,6 +20,14 @@
   padding: 0;
   box-sizing: border-box;
   user-select: none;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 body, html {
@@ -48,36 +56,42 @@ body, html {
 /* Glassmorphic Panel Style */
 .glass-panel {
   background: var(--bg-panel);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-card);
   border-radius: 12px;
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
 }
 
-/* HUD Top Bar */
+/* Top Bar */
 #top-bar {
   position: absolute;
   top: 10px;
-  left: 12px;
-  right: 12px;
-  height: 52px;
+  left: 14px;
+  right: 14px;
   z-index: 10;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0 14px;
-  gap: 12px;
-  border-radius: 10px;
-  border: 1px solid rgba(0, 240, 255, 0.2);
+  align-items: center;
+  padding: 6px 14px;
+  gap: 10px;
+  overflow: hidden;
 }
 
-.logo-area {
+.top-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  flex-shrink: 1;
+}
+
+.brand-logo {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
   cursor: default;
+  flex-shrink: 0;
 }
 
 .logo-icon {
@@ -101,7 +115,7 @@ body, html {
   align-items: center;
   gap: 8px;
   flex-wrap: nowrap;
-  overflow-x: auto;
+  overflow: hidden;
 }
 
 .stat-pill {

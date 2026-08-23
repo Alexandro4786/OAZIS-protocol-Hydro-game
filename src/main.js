@@ -363,9 +363,13 @@ class OasisGame {
       }
     }
 
-    // Sel va Jala paytida daryo sathi to'lib, zaxira ko'payadi
-    if (this.weatherPreset.id === 'storm_flood') {
-      res.surfaceWater = Math.min(10000, res.surfaceWater + (this.weatherPreset.riverSurgeRate || 60) * gameDt);
+    // Yomg'ir va Sel paytida daryo va akvifer zaxirasi to'lib boradi
+    if (this.weatherPreset.id === 'rain') {
+      res.surfaceWater = Math.min(10000, res.surfaceWater + 25 * gameDt);
+      res.aquiferWater = Math.min(20000, res.aquiferWater + 15 * gameDt);
+    } else if (this.weatherPreset.id === 'storm_flood') {
+      res.surfaceWater = Math.min(12000, res.surfaceWater + 90 * gameDt);
+      res.aquiferWater = Math.min(20000, res.aquiferWater + 45 * gameDt);
     }
 
     this.weather.id = this.weatherPreset.id;

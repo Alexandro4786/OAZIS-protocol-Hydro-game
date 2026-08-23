@@ -403,10 +403,10 @@ export class UIManager {
     
     let extraMeteo = `💨 ${weather.windSpeed || 3}m/s`;
     if (weather.rainRate && weather.rainRate > 0) {
-      extraMeteo += ` • 🌧️ +${weather.rainRate}mm`;
+      extraMeteo = `🌧️ +${weather.rainRate}mm • 💨 ${weather.windSpeed || 3}m/s`;
     }
     if (this.statTempEt0) {
-      this.statTempEt0.innerHTML = `${Math.round(weather.temperature)}°C <span class="et0-sub">(ET₀: ${weather.et0.toFixed(1)} • ${extraMeteo})</span>`;
+      this.statTempEt0.innerHTML = `${Math.round(weather.temperature)}°C <span class="et0-sub">(${extraMeteo})</span>`;
     }
 
     // Inqiroz Bannerini yangilash

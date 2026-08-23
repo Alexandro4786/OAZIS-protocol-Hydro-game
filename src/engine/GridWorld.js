@@ -188,6 +188,12 @@ export class GridWorld {
     const tech = IRRIGATION_TECH[tile.irrigation] || IRRIGATION_TECH['furrow'];
     if (!tech) return;
 
+    // Yomg'ir/sel yog'ayotganda yoki tuproq yetarli nam (>=75%) bo'lsa, suv sarflanmaydi (Avtomatik Tejamkorlik)
+    if ((weather.rainRate && weather.rainRate > 0) || tile.moisture >= 75) {
+      tile.currentFlow = 0;
+      return;
+    }
+
     let flowRate = tech.waterPerHour;
     if (tile.irrigation === 'scada_ai' && tile.isCoveredByIot) {
       const error = tile.targetMoisture - tile.moisture;
