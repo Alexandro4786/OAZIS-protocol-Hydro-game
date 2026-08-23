@@ -42,6 +42,31 @@ export class UIManager {
       });
     });
 
+    // 1.1. Pastki Menyuni Ochish / Yashirish Tugmasi (Green Farm 3 / SimCity FAB)
+    const bottomDock = document.getElementById('bottom-dock');
+    const toggleBtn = document.getElementById('btn-toggle-dock');
+    const toggleLabel = document.getElementById('dock-toggle-label');
+    const toggleArrow = document.getElementById('dock-toggle-arrow');
+    let isDockOpen = false;
+
+    toggleBtn?.addEventListener('click', () => {
+      this.audioManager.playClick();
+      isDockOpen = !isDockOpen;
+      if (isDockOpen) {
+        bottomDock.classList.remove('collapsed');
+        bottomDock.style.display = 'flex';
+        toggleBtn.classList.add('active');
+        if (toggleLabel) toggleLabel.innerText = "Menyuni Yashirish";
+        if (toggleArrow) toggleArrow.innerText = "▼";
+      } else {
+        bottomDock.classList.add('collapsed');
+        bottomDock.style.display = 'none';
+        toggleBtn.classList.remove('active');
+        if (toggleLabel) toggleLabel.innerText = "Asboblar & Ekinlar Menyusi";
+        if (toggleArrow) toggleArrow.innerText = "▲";
+      }
+    });
+
     // 2. Heatmap almashtirish
     document.querySelectorAll('.heatmap-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {

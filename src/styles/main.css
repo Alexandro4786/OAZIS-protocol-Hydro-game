@@ -356,15 +356,73 @@ body, html {
 /* Bottom Control Dock */
 #bottom-dock {
   position: absolute;
-  bottom: 16px;
+  bottom: 74px;
   left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
+  transform: translateX(-50%) translateY(0);
+  z-index: 12;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   max-width: 90vw;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#bottom-dock.collapsed {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(40px) scale(0.92);
+  display: none;
+}
+
+/* Large Floating Bottom Menu Toggle Button (Green Farm 3 / SimCity style) */
+.dock-toggle-btn {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  border-radius: 30px;
+  border: 1.5px solid rgba(0, 240, 255, 0.45);
+  background: rgba(13, 22, 38, 0.92);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(0, 240, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  user-select: none;
+}
+
+.dock-toggle-btn:hover {
+  background: rgba(0, 240, 255, 0.18);
+  border-color: var(--cyan-accent);
+  color: var(--cyan-accent);
+  box-shadow: 0 0 32px rgba(0, 240, 255, 0.4), 0 10px 36px rgba(0, 0, 0, 0.7);
+  transform: translateX(-50%) scale(1.04);
+}
+
+.dock-toggle-btn.active {
+  background: rgba(0, 240, 255, 0.25);
+  border-color: var(--cyan-accent);
+  color: var(--cyan-accent);
+  box-shadow: 0 0 28px rgba(0, 240, 255, 0.35);
+}
+
+.toggle-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.5));
+}
+
+.toggle-arrow {
+  font-size: 11px;
+  color: var(--cyan-accent);
+  transition: transform 0.3s ease;
 }
 
 .tab-selector {
