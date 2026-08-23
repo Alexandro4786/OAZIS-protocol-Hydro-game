@@ -504,6 +504,18 @@ export class UIManager {
     const harvestBtn = document.getElementById('btn-insp-harvest');
     if (tile.crop && (tile.crop.stage >= 4 || tile.crop.isWithered)) {
       harvestBtn.style.display = 'block';
+      if (tile.crop.isWithered) {
+        harvestBtn.innerText = '🧹 Qurigan ekinni tozalash ($0)';
+        harvestBtn.style.background = '#546e7a';
+        harvestBtn.style.color = '#fff';
+      } else {
+        const crp = CROP_TYPES[tile.crop.type];
+        const rev = crp ? crp.revenue : 250;
+        const eco = crp ? crp.ecoValue : 5;
+        harvestBtn.innerHTML = `🌾 Hosilni Yig'ish (+$${rev} 💰 +${eco} Eko ✨)`;
+        harvestBtn.style.background = 'linear-gradient(135deg, #00e676, #00b0ff)';
+        harvestBtn.style.color = '#071520';
+      }
     } else {
       harvestBtn.style.display = 'none';
     }

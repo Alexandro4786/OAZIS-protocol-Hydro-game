@@ -139,12 +139,8 @@ export class GridWorld {
             }
           }
 
-          // 3. Egatlab, Tomchilatish yoki Quvur orqali namlikni 60-75% optimal oraliqda ushlab turish
-          if (tile.crop || tile.irrigation || tile.hasPipe) {
-            if (!tile.irrigation) {
-              tile.irrigation = 'furrow';
-              tile.irrigationActive = true;
-            }
+          // 3. Faqat foydalanuvchi quvur yoki sug'orish o'rnatgan bo'lsagina suv sarflanadi
+          if (tile.irrigation && tile.irrigationActive && (tile.hasPipe || tile.building)) {
             if (tile.moisture < 65) {
               tile.moisture = Math.min(75, tile.moisture + 20 * dt);
             }

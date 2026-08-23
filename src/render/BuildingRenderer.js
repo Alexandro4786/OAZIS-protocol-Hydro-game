@@ -86,6 +86,12 @@ export class BuildingRenderer {
     this.cropMeshes.forEach((mesh) => {
       mesh.rotation.z = Math.sin(time * windFreq + mesh.position.x * 0.8) * windAngle;
       mesh.rotation.x = Math.cos(time * (windFreq * 0.8) + mesh.position.z * 0.8) * (windAngle * 0.5);
+
+      // 4. Pishgan hosil oltin belgisining aylanishi
+      if (mesh.userData.harvestBadge) {
+        mesh.userData.harvestBadge.rotation.y += dt * 3.5;
+        mesh.userData.harvestBadge.rotation.z += dt * 1.8;
+      }
     });
   }
 
@@ -913,6 +919,21 @@ export class BuildingRenderer {
         leaf.position.set(0, isWithered ? 1.8 : 2.1, 0);
         cropGroup.add(leaf);
       }
+    }
+
+    // Pishgan hosil tepasida yaltiragan oltin nishon (Harvest Star Badge)
+    if (stage >= 4 && !isWithered) {
+      const badgeGeo = new THREE.OctahedronGeometry(0.18);
+      const badgeMat = new THREE.MeshStandardMaterial({
+        color: 0xffd700,
+        emissive: 0xffa000,
+        emissiveIntensity: 0.9,
+        roughness: 0.2
+      });
+      const badge = new THREE.Mesh(badgeGeo, badgeMat);
+      badge.position.y = (cropType === 'orchard' || cropType === 'oasis_tree') ? 3.0 : 1.6;
+      cropGroup.add(badge);
+      cropGroup.userData.harvestBadge = badge;
     }
 
     this.objectGroup.add(cropGroup);

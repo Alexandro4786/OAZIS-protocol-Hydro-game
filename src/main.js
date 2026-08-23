@@ -164,6 +164,36 @@ class OasisGame {
 
     const tool = this.gameState.activeTool;
 
+    // 0. Hosil Yetilgan Ekinni 1 Bosishda To'g'ridan-to'g'ri Terib Olish (1-Click Direct Harvest)
+    if (tile.crop && tile.crop.stage >= 4 && !tile.crop.isWithered) {
+      const cropConfig = CROP_TYPES[tile.crop.type];
+      const revenue = this.gridWorld.harvestCrop(x, y);
+      if (revenue > 0) {
+        this.audioManager.playHarvest();
+        this.buildingRenderer.sync();
+        this.uiManager.spawnFloatingScore(
+          window.innerWidth / 2,
+          window.innerHeight / 2,
+          `+$${revenue} 💰 +${cropConfig ? cropConfig.ecoValue : 5} Eko ✨`,
+          'money'
+        );
+        this.gameState.emit('notify', {
+          type: 'success',
+          message: `🌾 ${cropConfig ? cropConfig.name : 'Ekin'} hosili yig'ib olindi! (+$${revenue})`
+        });
+        return;
+      }
+    }
+
+    // Qurigan ekinni 1 bosishda tozalash
+    if (tile.crop && tile.crop.isWithered && tool === 'survey') {
+      this.gridWorld.harvestCrop(x, y);
+      this.buildingRenderer.sync();
+      this.audioManager.playDemolish();
+      this.gameState.emit('notify', { type: 'info', message: "🧹 Qurigan ekin tozalandi" });
+      return;
+    }
+
     // Daryo katagiga narsa qurib bo'lmaydi (kanal intake dan tashqari)
     if (tile.type === 'river' && tool !== 'survey' && tool !== 'bld_canal_intake') {
       this.gameState.emit('notify', { type: 'warning', message: "Daryo oqimiga ekin yoki quvur ekib bo'lmaydi!" });
