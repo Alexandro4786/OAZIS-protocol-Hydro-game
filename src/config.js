@@ -21,7 +21,7 @@ export const INITIAL_RESOURCES = {
   harvestCountTotal: 0
 };
 
-// Professional Meteorologik Ob-Havo Turlari
+// Professional Meteorologik Ob-Havo Turlari va Tabiiy Ketma-ketlik (State Machine)
 export const WEATHER_PRESETS = {
   sunny: {
     id: 'sunny',
@@ -36,53 +36,54 @@ export const WEATHER_PRESETS = {
     skyColor: '#101826',
     fogColor: '#101826',
     sunIntensity: 1.4,
-    description: "Iliq va ochiq havo. Evapotranspiratsiya me'yorida."
+    description: "Iliq va ochiq havo. Evapotranspiratsiya me'yorida.",
+    nextTransitions: [
+      { id: 'cloudy', weight: 60 },
+      { id: 'humid_sun', weight: 25 },
+      { id: 'windy', weight: 15 }
+    ]
   },
   cloudy: {
     id: 'cloudy',
-    name: "Bulutli Havo",
+    name: "Bulutli & Salqin Havo",
     icon: '☁️',
     color: '#90a4ae',
     tempMod: -4,
-    et0Mod: 0.65,
-    windSpeed: 6,
+    et0Mod: 0.6,
+    windSpeed: 5,
     rainRate: 0,
     cloudCover: 0.85,
     skyColor: '#1e293b',
     fogColor: '#1e293b',
-    sunIntensity: 0.9,
-    description: "Qalin bulutlar quyosh nurini to'smoqda. Bug'lanish kamaydi."
+    sunIntensity: 0.85,
+    description: "Qalin bulutlar to'planmoqda, havo salqinladi. Yomg'ir ehtimoli ortmoqda.",
+    nextTransitions: [
+      { id: 'rain', weight: 50 },
+      { id: 'storm_flood', weight: 20 },
+      { id: 'humid_sun', weight: 20 },
+      { id: 'sunny', weight: 10 }
+    ]
   },
   rain: {
     id: 'rain',
     name: "Mayin Yomg'ir",
     icon: '🌧️',
     color: '#4fc3f7',
-    tempMod: -7,
+    tempMod: -6,
     et0Mod: 0.35,
-    windSpeed: 8,
-    rainRate: 12,
+    windSpeed: 7,
+    rainRate: 14,
     cloudCover: 1.0,
     skyColor: '#0f172a',
     fogColor: '#0f172a',
     sunIntensity: 0.6,
     moistureGainRate: 2.8,
-    description: "Foydali yomg'ir yog'moqda! Barcha ekinlar tabiiy namlik bilan to'yinmoqda."
-  },
-  windy: {
-    id: 'windy',
-    name: "Kuchli Shamol",
-    icon: '💨',
-    color: '#ffb74d',
-    tempMod: +5,
-    et0Mod: 1.85,
-    windSpeed: 18,
-    rainRate: 0,
-    cloudCover: 0.25,
-    skyColor: '#261b14',
-    fogColor: '#261b14',
-    sunIntensity: 1.3,
-    description: "Quruq va issiq garmsel shamoli esmoqda. Tuproq namligi tez bug'lanmoqda!"
+    description: "Foydali yomg'ir yog'moqda! Barcha dalalar tabiiy namlik bilan to'yinmoqda.",
+    nextTransitions: [
+      { id: 'fresh_cloudy', weight: 55 },
+      { id: 'storm_flood', weight: 25 },
+      { id: 'humid_sun', weight: 20 }
+    ]
   },
   storm_flood: {
     id: 'storm_flood',
@@ -90,16 +91,82 @@ export const WEATHER_PRESETS = {
     icon: '⛈️',
     color: '#7c4dff',
     tempMod: -9,
-    et0Mod: 0.2,
-    windSpeed: 24,
+    et0Mod: 0.15,
+    windSpeed: 22,
     rainRate: 45,
     cloudCover: 1.0,
     skyColor: '#0a0e17',
     fogColor: '#0a0e17',
     sunIntensity: 0.35,
     moistureGainRate: 7.5,
-    riverSurgeRate: 80,
-    description: "XAVFLI METEO: Kuchli sel va jala! Daryo toshishi mumkin, rezervuarlar suv bilan to'lmoqda."
+    riverSurgeRate: 85,
+    description: "XAVFLI METEO: Kuchli sel va jala! Daryo toshishi mumkin, rezervuarlar suv bilan to'lmoqda.",
+    nextTransitions: [
+      { id: 'rain', weight: 60 },
+      { id: 'fresh_cloudy', weight: 40 }
+    ]
+  },
+  fresh_cloudy: {
+    id: 'fresh_cloudy',
+    name: "Yomg'irdan So'ng Salqin",
+    icon: '🌤️',
+    color: '#81d4fa',
+    tempMod: -3,
+    et0Mod: 0.7,
+    windSpeed: 4,
+    rainRate: 0,
+    cloudCover: 0.55,
+    skyColor: '#1a2332',
+    fogColor: '#1a2332',
+    sunIntensity: 1.0,
+    moistureGainRate: 0,
+    description: "Yomg'irdan keyingi salqin va toza shabada. Tuproq nami asta-sekin bug'lanmoqda.",
+    nextTransitions: [
+      { id: 'humid_sun', weight: 65 },
+      { id: 'sunny', weight: 20 },
+      { id: 'cloudy', weight: 15 }
+    ]
+  },
+  humid_sun: {
+    id: 'humid_sun',
+    name: "Bulutli Dim Havo",
+    icon: '⛅',
+    color: '#ffe082',
+    tempMod: +2,
+    et0Mod: 0.85,
+    windSpeed: 2,
+    rainRate: 0,
+    cloudCover: 0.5,
+    skyColor: '#212d40',
+    fogColor: '#212d40',
+    sunIntensity: 1.25,
+    moistureGainRate: 0,
+    description: "Qalin bulutlar orasidan quyosh chiqdi. Tuproqdagi namlik bug'lanib, havo dimlashmoqda.",
+    nextTransitions: [
+      { id: 'cloudy', weight: 45 },
+      { id: 'sunny', weight: 45 },
+      { id: 'rain', weight: 10 }
+    ]
+  },
+  windy: {
+    id: 'windy',
+    name: "Quruq Garmsel Shamoli",
+    icon: '💨',
+    color: '#ffb74d',
+    tempMod: +6,
+    et0Mod: 1.9,
+    windSpeed: 19,
+    rainRate: 0,
+    cloudCover: 0.2,
+    skyColor: '#261b14',
+    fogColor: '#261b14',
+    sunIntensity: 1.3,
+    moistureGainRate: 0,
+    description: "Quruq va issiq garmsel shamoli esmoqda. Tuproq namligi tez bug'lanmoqda!",
+    nextTransitions: [
+      { id: 'sunny', weight: 50 },
+      { id: 'cloudy', weight: 50 }
+    ]
   }
 };
 

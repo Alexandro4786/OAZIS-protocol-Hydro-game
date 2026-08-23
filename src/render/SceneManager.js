@@ -425,6 +425,14 @@ export class SceneManager {
       skyHex = '#080c14';
       dirColorHex = '#5c6bc0';
       ambientHex = '#37474f';
+    } else if (weather.id === 'fresh_cloudy') {
+      skyHex = '#1a2332';
+      dirColorHex = '#b3e5fc';
+      ambientHex = '#78909c';
+    } else if (weather.id === 'humid_sun') {
+      skyHex = '#212d40';
+      dirColorHex = '#ffe082';
+      ambientHex = '#90a4ae';
     } else if (weather.id === 'windy') {
       skyHex = '#261b14';
       dirColorHex = '#ffe082';
@@ -434,7 +442,11 @@ export class SceneManager {
     this.scene.background.set(skyHex);
     if (this.scene.fog) {
       this.scene.fog.color.set(skyHex);
-      this.scene.fog.density = weather.id === 'storm_flood' ? 0.025 : (weather.id === 'windy' ? 0.02 : 0.015);
+      let fogD = 0.015;
+      if (weather.id === 'storm_flood') fogD = 0.025;
+      else if (weather.id === 'windy' || weather.id === 'humid_sun') fogD = 0.02;
+      else if (weather.id === 'fresh_cloudy') fogD = 0.017;
+      this.scene.fog.density = fogD;
     }
     this.dirLight.color.set(dirColorHex);
     this.dirLight.intensity = baseSunIntensity;

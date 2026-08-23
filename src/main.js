@@ -356,18 +356,35 @@ class OasisGame {
     res.timeOfDay = (res.timeOfDay + gameDt * 0.4) % 24;
     res.day += gameDt * 0.016;
 
-    // 1. Dinamik Meteorologik Ob-Havo Tsikli (Weather Cycle)
+    // 1. Dinamik Tabiiy Meteorologik Tsikl (Realistic Meteorological Markov Chain)
     this.weatherTimer -= gameDt;
     if (this.weatherTimer <= 0) {
-      const keys = ['sunny', 'sunny', 'cloudy', 'rain', 'windy', 'storm_flood'];
-      const nextKey = keys[Math.floor(Math.random() * keys.length)];
-      this.weatherPreset = WEATHER_PRESETS[nextKey] || WEATHER_PRESETS.sunny;
-      this.weatherTimer = 45 + Math.random() * 45; // 45-90 soniya
+      const curPreset = this.weatherPreset || WEATHER_PRESETS.sunny;
+      const transitions = curPreset.nextTransitions || [
+        { id: 'cloudy', weight: 60 },
+        { id: 'humid_sun', weight: 25 },
+        { id: 'sunny', weight: 15 }
+      ];
+
+      // Ehtimollik (vazn) bo'yicha tabiiy keyingi holatni tanlash
+      const totalWeight = transitions.reduce((sum, t) => sum + t.weight, 0);
+      let rand = Math.random() * totalWeight;
+      let nextId = transitions[0].id;
+      for (const t of transitions) {
+        if (rand < t.weight) {
+          nextId = t.id;
+          break;
+        }
+        rand -= t.weight;
+      }
+
+      this.weatherPreset = WEATHER_PRESETS[nextId] || WEATHER_PRESETS.sunny;
+      this.weatherTimer = 45 + Math.random() * 40; // 45-85 soniya
 
       this.gameState.emit('weatherChanged', this.weatherPreset);
       this.gameState.emit('notify', {
         type: 'info',
-        message: `${this.weatherPreset.icon} Ob-havo o'zgardi: ${this.weatherPreset.name}! ${this.weatherPreset.description}`
+        message: `${this.weatherPreset.icon} Ob-havo: ${this.weatherPreset.name}! ${this.weatherPreset.description}`
       });
 
       if (this.weatherPreset.id === 'windy') {
