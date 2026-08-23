@@ -67,6 +67,14 @@ export class SceneManager {
     this.selectMesh.visible = false;
     this.scene.add(this.selectMesh);
 
+    // Ground Plane for exact 1:1 Map Dragging (Google Maps / Yandex Maps style)
+    this.groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    this.isPanningMap = false;
+    this.isOrbiting = false;
+    this.hasMovedMap = false;
+    this.panStartGroundPoint = new THREE.Vector3();
+    this.dragStartPixel = { x: 0, y: 0 };
+
     // Controls setup
     this.setupControls();
 
@@ -98,6 +106,19 @@ export class SceneManager {
     this.scene.add(hemiLight);
   }
 
+  getGroundPoint(clientX, clientY) {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const ndcX = ((clientX - rect.left) / rect.width) * 2 - 1;
+    const ndcY = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+    const tempRay = new THREE.Raycaster();
+    tempRay.setFromCamera(new THREE.Vector2(ndcX, ndcY), this.camera);
+    
+    const hitPoint = new THREE.Vector3();
+    const hasHit = tempRay.ray.intersectPlane(this.groundPlane, hitPoint);
+    return hasHit ? hitPoint : null;
+  }
+
   updateCameraPosition() {
     const x = this.cameraTarget.x + this.cameraDistance * Math.sin(this.cameraAngle) * Math.cos(this.cameraPitch);
     const y = this.cameraTarget.y + this.cameraDistance * Math.sin(this.cameraPitch);
@@ -107,58 +128,140 @@ export class SceneManager {
   }
 
   setupControls() {
-    let isDragging = false;
-    let isPanning = false;
     let prevMouse = { x: 0, y: 0 };
+    let initialTouchDist = null;
 
     this.renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
 
+    // MOUSE DOWN
     this.renderer.domElement.addEventListener('mousedown', (e) => {
-      if (e.button === 2 || e.button === 1) { // Right or Middle click to rotate
-        isDragging = true;
-        prevMouse = { x: e.clientX, y: e.clientY };
-      } else if (e.button === 0 && e.shiftKey) { // Shift+Left to pan
-        isPanning = true;
-        prevMouse = { x: e.clientX, y: e.clientY };
+      prevMouse = { x: e.clientX, y: e.clientY };
+      this.dragStartPixel = { x: e.clientX, y: e.clientY };
+      this.hasMovedMap = false;
+
+      if (e.button === 0) { // Chap tugma (Google Maps kabi surish)
+        this.isPanningMap = true;
+        const ground = this.getGroundPoint(e.clientX, e.clientY);
+        if (ground) {
+          this.panStartGroundPoint.copy(ground);
+        }
+      } else if (e.button === 2 || e.button === 1) { // O'ng yoki g'ildirak (Kamerani burish)
+        this.isOrbiting = true;
       }
     });
 
+    // MOUSE MOVE
     window.addEventListener('mousemove', (e) => {
       const rect = this.renderer.domElement.getBoundingClientRect();
       this.mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
       this.mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-      if (isDragging) {
+      // 1. Google Maps / Yandex Maps uslubidagi tekis surish (1:1 Ground Pan)
+      if (this.isPanningMap) {
+        const moveDist = Math.hypot(e.clientX - this.dragStartPixel.x, e.clientY - this.dragStartPixel.y);
+        if (moveDist > 4) {
+          this.hasMovedMap = true;
+          this.container.classList.add('grabbing');
+        }
+
+        if (this.hasMovedMap) {
+          const currentGround = this.getGroundPoint(e.clientX, e.clientY);
+          if (currentGround) {
+            const delta = this.panStartGroundPoint.clone().sub(currentGround);
+            this.cameraTarget.add(delta);
+
+            // Xarita chegaralaridan chiqib ketmasligi uchun chegara
+            const maxBound = GRID_SIZE * TILE_SIZE + 12;
+            this.cameraTarget.x = Math.max(-12, Math.min(maxBound, this.cameraTarget.x));
+            this.cameraTarget.z = Math.max(-12, Math.min(maxBound, this.cameraTarget.z));
+
+            this.updateCameraPosition();
+
+            // Qayta hisoblash (1:1 bog'lanish uchun)
+            const newGround = this.getGroundPoint(e.clientX, e.clientY);
+            if (newGround) {
+              this.panStartGroundPoint.copy(newGround);
+            }
+          }
+        }
+      }
+
+      // 2. Kamerani burish (Orbit rotate)
+      if (this.isOrbiting) {
         const dx = e.clientX - prevMouse.x;
         const dy = e.clientY - prevMouse.y;
         this.cameraAngle -= dx * 0.008;
         this.cameraPitch = Math.max(0.2, Math.min(Math.PI / 2.1, this.cameraPitch + dy * 0.008));
         this.updateCameraPosition();
         prevMouse = { x: e.clientX, y: e.clientY };
-      } else if (isPanning) {
-        const dx = e.clientX - prevMouse.x;
-        const dy = e.clientY - prevMouse.y;
-        const panSpeed = 0.04;
-        const forward = new THREE.Vector3().subVectors(this.cameraTarget, this.camera.position).setY(0).normalize();
-        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-        
-        this.cameraTarget.addScaledVector(right, -dx * panSpeed);
-        this.cameraTarget.addScaledVector(forward, dy * panSpeed);
-        this.updateCameraPosition();
-        prevMouse = { x: e.clientX, y: e.clientY };
       }
     });
 
+    // MOUSE UP
     window.addEventListener('mouseup', () => {
-      isDragging = false;
-      isPanning = false;
+      this.isPanningMap = false;
+      this.isOrbiting = false;
+      this.container.classList.remove('grabbing');
     });
 
+    // WHEEL (Zoom)
     this.renderer.domElement.addEventListener('wheel', (e) => {
       e.preventDefault();
       this.cameraDistance = Math.max(12, Math.min(75, this.cameraDistance + e.deltaY * 0.04));
       this.updateCameraPosition();
     }, { passive: false });
+
+    // TOUCH EVENTS (Sensor ekranlar va planshetlar uchun)
+    this.renderer.domElement.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        const t = e.touches[0];
+        this.dragStartPixel = { x: t.clientX, y: t.clientY };
+        this.hasMovedMap = false;
+        this.isPanningMap = true;
+        const ground = this.getGroundPoint(t.clientX, t.clientY);
+        if (ground) this.panStartGroundPoint.copy(ground);
+      } else if (e.touches.length === 2) {
+        this.isPanningMap = false;
+        initialTouchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: false });
+
+    this.renderer.domElement.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 1 && this.isPanningMap) {
+        const t = e.touches[0];
+        const moveDist = Math.hypot(t.clientX - this.dragStartPixel.x, t.clientY - this.dragStartPixel.y);
+        if (moveDist > 6) {
+          this.hasMovedMap = true;
+        }
+        if (this.hasMovedMap) {
+          const currentGround = this.getGroundPoint(t.clientX, t.clientY);
+          if (currentGround) {
+            const delta = this.panStartGroundPoint.clone().sub(currentGround);
+            this.cameraTarget.add(delta);
+            this.updateCameraPosition();
+            const newGround = this.getGroundPoint(t.clientX, t.clientY);
+            if (newGround) this.panStartGroundPoint.copy(newGround);
+          }
+        }
+      } else if (e.touches.length === 2 && initialTouchDist) {
+        const currentDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const diff = initialTouchDist - currentDist;
+        this.cameraDistance = Math.max(12, Math.min(75, this.cameraDistance + diff * 0.08));
+        this.updateCameraPosition();
+        initialTouchDist = currentDist;
+      }
+    }, { passive: false });
+
+    this.renderer.domElement.addEventListener('touchend', () => {
+      this.isPanningMap = false;
+      initialTouchDist = null;
+    });
 
     // Keyboard Pan
     window.addEventListener('keydown', (e) => {

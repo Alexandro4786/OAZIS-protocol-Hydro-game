@@ -104,6 +104,11 @@ class OasisGame {
     domElement.addEventListener('click', (e) => {
       if (e.button !== 0) return; // Faqat chap klik
 
+      // Agar xarita surilgan bo'lsa (Google Maps drag), klik hisoblanmasin
+      if (this.sceneManager.hasMovedMap) {
+        return;
+      }
+
       // Raycast orqali bosilgan katakni aniqlash
       this.sceneManager.raycaster.setFromCamera(this.sceneManager.mouse, this.sceneManager.camera);
       const intersects = this.sceneManager.raycaster.intersectObjects(this.tileRenderer.interactiveMeshes);
