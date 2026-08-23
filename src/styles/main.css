@@ -513,22 +513,41 @@ body, html {
 /* Floating Heatmap Toggle (Top-Left) */
 .heatmap-toggle-btn {
   position: absolute;
-  top: 72px;
+  top: 74px;
   left: 14px;
   z-index: 15;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 16px;
+  padding: 8px 16px;
   border-radius: 20px;
+  border: 1px solid rgba(0, 240, 255, 0.4);
+  background: rgba(13, 22, 38, 0.92);
+  color: #fff;
   font-size: 12px;
   font-weight: 700;
+  cursor: pointer;
   box-shadow: 0 0 16px rgba(0, 240, 255, 0.2), 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.heatmap-toggle-btn:hover {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--cyan-accent);
+  color: var(--cyan-accent);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
+}
+
+.heatmap-toggle-btn.active {
+  background: rgba(0, 240, 255, 0.25);
+  border-color: var(--cyan-accent);
+  color: var(--cyan-accent);
 }
 
 #heatmap-dock {
   position: absolute;
-  top: 114px;
+  top: 118px;
   left: 14px;
   z-index: 14;
   display: flex;
