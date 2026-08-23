@@ -496,7 +496,8 @@ class OasisGame {
       dt,
       this.gameState.resources.ecoScore,
       this.crisisManager.activeCrisis,
-      this.weatherPreset
+      this.weatherPreset,
+      this.gameState.resources.timeOfDay
     );
     this.terraformer.update(this.gameState.resources.ecoScore);
     this.sceneManager.render();

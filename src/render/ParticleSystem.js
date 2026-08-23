@@ -119,7 +119,7 @@ export class ParticleSystem {
     }
   }
 
-  update(time, dt, ecoScore, crisis, weather = {}) {
+  update(time, dt, ecoScore, crisis, weather = {}, timeOfDay = 12) {
     const mapWidth = GRID_SIZE * TILE_SIZE;
 
     // 1. Sprinkler va truba yorilishidan suv sachrashi
@@ -217,8 +217,9 @@ export class ParticleSystem {
       this.dustGeo.attributes.position.needsUpdate = true;
     }
 
-    // 4. Qushlar parvozi (Eko-Ball > 30 va yog'ingarchilik/to'fon bo'lmasa)
-    const showBirds = ecoScore >= 30 && !isRaining && weather.id !== 'storm_flood';
+    // 4. Qushlar parvozi (Faqat kunduzi: 06:00 - 19:00, Eko-Ball > 30, va yomg'ir/to'fon/garmsel bo'lmaganda)
+    const isDay = timeOfDay >= 6 && timeOfDay <= 19;
+    const showBirds = isDay && ecoScore >= 30 && !isRaining && weather.id !== 'storm_flood' && weather.id !== 'windy';
     this.birdsGroup.visible = showBirds;
     if (showBirds) {
       this.birds.forEach((bird) => {

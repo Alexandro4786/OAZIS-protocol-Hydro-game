@@ -15,13 +15,13 @@ export class Terraformer {
     const worldCenter = (GRID_SIZE * TILE_SIZE) / 2;
     const groundGeo = new THREE.PlaneGeometry(160, 160, 24, 24);
     
-    // Qumtepalar relefi
+    // Qumtepalar relefi (Dala chegarasidan xavfsiz masofada)
     const pos = groundGeo.attributes.position;
     for (let i = 0; i < pos.count; i++) {
       const vx = pos.getX(i);
       const vy = pos.getY(i);
       const distFromCenter = Math.sqrt(vx * vx + vy * vy);
-      if (distFromCenter > (GRID_SIZE * TILE_SIZE) * 0.7) {
+      if (distFromCenter > (GRID_SIZE * TILE_SIZE) * 0.88) {
         pos.setZ(i, Math.sin(vx * 0.1) * Math.cos(vy * 0.1) * 2.5);
       }
     }
@@ -35,7 +35,7 @@ export class Terraformer {
 
     const groundMesh = new THREE.Mesh(groundGeo, this.groundMat);
     groundMesh.rotation.x = -Math.PI / 2;
-    groundMesh.position.set(worldCenter, -0.22, worldCenter);
+    groundMesh.position.set(worldCenter, -0.32, worldCenter);
     groundMesh.receiveShadow = true;
     this.group.add(groundMesh);
 
